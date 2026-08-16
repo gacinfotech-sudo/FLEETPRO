@@ -37,6 +37,7 @@ import {
 import { LeaveManagementService } from "./services/LeaveManagementService";
 import driverOnboardingRoutes from "./routes/driverOnboardingRoutes.js";
 import plansRoutes from "./routes/plansRoutes";
+import subscriptionsRoutes from "./routes/subscriptionsRoutes";
 import { Attendance, DriverSalary, Driver } from "./models";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -2092,6 +2093,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== PHASE 3: SAAS BILLING ROUTES =====
   // Register Plans Routes
   app.use("/api", plansRoutes);
+
+  // Register Subscriptions Routes
+  app.use("/api", subscriptionsRoutes);
 
   // ===== WAVE 9: SERVICE OPERATIONS ROUTES =====
   const { ServiceTicketService } = await import('./services/ServiceTicketService');
