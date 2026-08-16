@@ -252,13 +252,13 @@ export class TenantBrandingService {
       throw new Error('Branding config not found');
     }
 
-    const updated = {
-      headerColor: (template?.headerColor || config.emailTemplate?.headerColor || '#FFFFFF') as string,
-      footerColor: (template?.footerColor || config.emailTemplate?.footerColor || '#F3F4F6') as string,
-      logoPosition: (template?.logoPosition || config.emailTemplate?.logoPosition || 'center') as string,
-      companyName: (template?.companyName || config.emailTemplate?.companyName || '') as string,
-      supportEmail: (template?.supportEmail || config.emailTemplate?.supportEmail || '') as string,
-      supportPhone: (template?.supportPhone || config.emailTemplate?.supportPhone || '') as string | undefined
+    const updated: TenantBrandingConfig['emailTemplate'] = {
+      headerColor: template?.headerColor || config.emailTemplate?.headerColor || '#FFFFFF',
+      footerColor: template?.footerColor || config.emailTemplate?.footerColor || '#F3F4F6',
+      logoPosition: (template?.logoPosition || config.emailTemplate?.logoPosition || 'center') as 'left' | 'center' | 'right',
+      companyName: template?.companyName || config.emailTemplate?.companyName || '',
+      supportEmail: template?.supportEmail || config.emailTemplate?.supportEmail || '',
+      supportPhone: template?.supportPhone || config.emailTemplate?.supportPhone
     };
 
     config.emailTemplate = updated;
