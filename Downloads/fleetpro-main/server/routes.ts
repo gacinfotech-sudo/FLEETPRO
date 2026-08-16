@@ -38,6 +38,9 @@ import { LeaveManagementService } from "./services/LeaveManagementService";
 import driverOnboardingRoutes from "./routes/driverOnboardingRoutes.js";
 import plansRoutes from "./routes/plansRoutes";
 import subscriptionsRoutes from "./routes/subscriptionsRoutes";
+import invoicingRoutes from "./routes/invoicingRoutes";
+import paymentsRoutes from "./routes/paymentsRoutes";
+import { RenewalScheduler } from "./services/RenewalScheduler";
 import { Attendance, DriverSalary, Driver } from "./models";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -2096,6 +2099,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Subscriptions Routes
   app.use("/api", subscriptionsRoutes);
+
+  // Register Invoicing Routes
+  app.use("/api", invoicingRoutes);
+
+  // Register Payments Routes
+  app.use("/api", paymentsRoutes);
+
+  // Initialize Renewal Scheduler
+  try {
+    const renewalScheduler = new RenewalScheduler();
+    renewalScheduler.initialize();
+  } catch (error) {
+    console.error('Error initializing renewal scheduler:', error);
+  }
 
   // ===== WAVE 9: SERVICE OPERATIONS ROUTES =====
   const { ServiceTicketService } = await import('./services/ServiceTicketService');
