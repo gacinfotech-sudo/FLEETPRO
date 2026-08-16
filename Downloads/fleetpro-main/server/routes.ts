@@ -36,10 +36,14 @@ import {
 } from "./schemas/mongodb-schemas";
 import { LeaveManagementService } from "./services/LeaveManagementService";
 import driverOnboardingRoutes from "./routes/driverOnboardingRoutes.js";
+import userOnboardingRoutes from "./routes/userOnboardingRoutes";
+import signupRoutes from "./routes/signupRoutes";
 import plansRoutes from "./routes/plansRoutes";
 import subscriptionsRoutes from "./routes/subscriptionsRoutes";
 import invoicingRoutes from "./routes/invoicingRoutes";
 import paymentsRoutes from "./routes/paymentsRoutes";
+import authAdvancedRoutes from "./routes/auth-advanced.js";
+import { protectLoginEndpoint, recordFailedLogin, clearBruteForceOnSuccess, protectAdminEndpoint } from "./middleware/adminLimiter.js";
 import { RenewalScheduler } from "./services/RenewalScheduler";
 import { Attendance, DriverSalary, Driver } from "./models";
 
@@ -143,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static('uploads'));
 
   // Auth Routes with security enhancements
-  app.post("/api/auth/login", checkUserLockout, async (req, res) => {
+  app.post("/api/auth/login", checkUserLockout, protectLoginEndpoint, recordFailedLogin, async (req, res) => {
     console.log('Login attempt for:', req.body.userId);
     try {
       const { userId, password } = req.body;
@@ -221,7 +225,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         console.log('Session saved successfully for user:', user.userId);
-        
+
+        // Clear brute force protection on successful login
+        clearBruteForceOnSuccess(userId);
+
         res.json({
           user: {
             id: user.id,
@@ -2093,6 +2100,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register Driver Onboarding Routes
   app.use("/api/driver-onboarding", driverOnboardingRoutes);
 
+  // Register User Onboarding Routes
+  app.use("/api/onboarding", userOnboardingRoutes);
+
   // ===== PHASE 3: SAAS BILLING ROUTES =====
   // Register Plans Routes
   app.use("/api", plansRoutes);
@@ -2105,6 +2115,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Payments Routes
   app.use("/api", paymentsRoutes);
+
+  // ===== PHASE 4: ADVANCED AUTH & SECURITY =====
+  // Register Advanced Auth Routes
+  app.use("/api", authAdvancedRoutes);
+
+  // Register Signup Routes (Public)
+  app.use("/api/signup", signupRoutes);
 
   // Initialize Renewal Scheduler
   try {

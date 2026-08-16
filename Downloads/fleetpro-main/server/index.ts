@@ -39,12 +39,17 @@ import { setupVite, serveStatic, log } from "./vite";
 import connectDB from "./connectDB";
 import { storage } from "./storage-mongodb";
 import mongoose from "mongoose";
+import { logger } from "./utils/logger.js";
+import { setupSecurityMiddleware } from "./middleware/securityMiddleware.js";
 
 const app = express();
 // Trust proxy for rate limiting and security middleware
 app.set('trust proxy', true);
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Setup security middleware
+setupSecurityMiddleware(app);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -70,6 +75,9 @@ app.use((req, res, next) => {
       }
 
       log(logLine);
+
+      // Also log to persistent logger
+      logger.logApiRequest(req.method, path, res.statusCode, duration, (req as any).userId);
     }
   });
 
@@ -98,7 +106,7 @@ app.use((req, res, next) => {
 
   // Lightweight health endpoint for production deployment checks. Keeping this
   // independent from tenant/session state makes it safe for load balancers.
-  app.get('/api/health', (_req, res) => {
+  const healthHandler = (_req: any, res: Response) => {
     const dbConnected = mongoose.connection.readyState === 1;
     res.status(dbConnected ? 200 : 503).json({
       ok: dbConnected,
@@ -106,7 +114,10 @@ app.use((req, res, next) => {
       database: dbConnected ? 'connected' : 'disconnected',
       timestamp: new Date().toISOString()
     });
-  });
+  };
+
+  app.get('/health', healthHandler);
+  app.get('/api/health', healthHandler);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -133,11 +144,12 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = process.env.PORT ? parseInt(process.env.PORT) : 5050;
+  const host = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging' ? '0.0.0.0' : 'localhost';
   server.listen({
     port,
-    host: "localhost",
+    host,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`serving on ${host}:${port}`);
   });
 
   // Start background job to automatically mark expired bookings as completed
