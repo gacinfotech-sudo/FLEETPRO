@@ -24,6 +24,11 @@ export interface IUser extends Document {
   role: 'admin' | 'client' | 'manager';
   tenantId?: mongoose.Types.ObjectId;
   sessionId?: string;
+  deviceInfo?: {
+    userAgent?: string;
+    ip?: string;
+    loginTime?: Date;
+  };
   lastLogin?: Date;
   lastLoginIP?: string;
   lastLoginUserAgent?: string;
@@ -996,6 +1001,218 @@ const SLAMetricsSchema = new Schema<ISLAMetrics>({
   createdAt: { type: Date, default: Date.now }
 });
 
+// ==================== SaaS Billing Models ====================
+
+// Plan Interface
+export interface IPlan extends Document {
+  name: string;
+  code: string;
+  description: string;
+  pricing: {
+    monthlyUsd: number;
+    quarterlyUsd?: number;
+    halfYearlyUsd?: number;
+    annualUsd?: number;
+  };
+  limits: {
+    maxVehicles: number;
+    maxDrivers: number;
+    maxUsers: number;
+  };
+  features: string[];
+  trial?: {
+    daysCount: number;
+    enabled: boolean;
+  };
+  status: 'active' | 'inactive' | 'archived';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Plan Schema
+const PlanSchema = new Schema<IPlan>({
+  name: { type: String, required: true },
+  code: { type: String, required: true, unique: true },
+  description: { type: String },
+  pricing: {
+    monthlyUsd: { type: Number, required: true },
+    quarterlyUsd: { type: Number },
+    halfYearlyUsd: { type: Number },
+    annualUsd: { type: Number }
+  },
+  limits: {
+    maxVehicles: { type: Number, required: true, default: 0 },
+    maxDrivers: { type: Number, required: true, default: 0 },
+    maxUsers: { type: Number, required: true, default: 0 }
+  },
+  features: [{ type: String }],
+  trial: {
+    daysCount: { type: Number, default: 14 },
+    enabled: { type: Boolean, default: false }
+  },
+  status: { type: String, enum: ['active', 'inactive', 'archived'], default: 'active' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Subscription Interface
+export interface ISubscription extends Document {
+  tenantId: mongoose.Types.ObjectId;
+  planId: mongoose.Types.ObjectId;
+  billingCycle: 'monthly' | 'quarterly' | 'halfYearly' | 'annual';
+  status: 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'CANCELLED' | 'LOCKED';
+  startDate: Date;
+  renewalDate: Date;
+  isTrial: boolean;
+  trialEndsAt?: Date;
+  cancelledAt?: Date;
+  cancelReason?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Subscription Schema
+const SubscriptionSchema = new Schema<ISubscription>({
+  tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, unique: true },
+  planId: { type: Schema.Types.ObjectId, ref: 'Plan', required: true },
+  billingCycle: { type: String, enum: ['monthly', 'quarterly', 'halfYearly', 'annual'], default: 'monthly' },
+  status: { type: String, enum: ['TRIAL', 'ACTIVE', 'SUSPENDED', 'CANCELLED', 'LOCKED'], default: 'ACTIVE' },
+  startDate: { type: Date, required: true },
+  renewalDate: { type: Date, required: true },
+  isTrial: { type: Boolean, default: false },
+  trialEndsAt: { type: Date },
+  cancelledAt: { type: Date },
+  cancelReason: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// SaaS Invoice Interface
+export interface ISaaSInvoice extends Document {
+  invoiceNumber: string;
+  tenantId: mongoose.Types.ObjectId;
+  subscriptionId: mongoose.Types.ObjectId;
+  planId: mongoose.Types.ObjectId;
+  billingCycle: string;
+  period: {
+    start: Date;
+    end: Date;
+  };
+  amount: number;
+  tax: number;
+  total: number;
+  paid: number;
+  outstanding: number;
+  dueDate: Date;
+  status: 'ISSUED' | 'PARTIAL' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// SaaS Invoice Schema
+const SaaSInvoiceSchema = new Schema<ISaaSInvoice>({
+  invoiceNumber: { type: String, required: true, unique: true },
+  tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  subscriptionId: { type: Schema.Types.ObjectId, ref: 'Subscription', required: true },
+  planId: { type: Schema.Types.ObjectId, ref: 'Plan', required: true },
+  billingCycle: { type: String, required: true },
+  period: {
+    start: { type: Date, required: true },
+    end: { type: Date, required: true }
+  },
+  amount: { type: Number, required: true },
+  tax: { type: Number, default: 0 },
+  total: { type: Number, required: true },
+  paid: { type: Number, default: 0 },
+  outstanding: { type: Number, required: true },
+  dueDate: { type: Date, required: true },
+  status: { type: String, enum: ['ISSUED', 'PARTIAL', 'PAID', 'OVERDUE', 'CANCELLED'], default: 'ISSUED' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// SaaS Payment Interface
+export interface ISaaSPayment extends Document {
+  invoiceId: mongoose.Types.ObjectId;
+  tenantId: mongoose.Types.ObjectId;
+  amount: number;
+  paymentDate: Date;
+  paymentMode: 'bank_transfer' | 'card' | 'check' | 'upi' | 'other';
+  transactionReference: string;
+  status: 'received' | 'failed' | 'pending';
+  createdAt: Date;
+}
+
+// SaaS Payment Schema
+const SaaSPaymentSchema = new Schema<ISaaSPayment>({
+  invoiceId: { type: Schema.Types.ObjectId, ref: 'SaaSInvoice', required: true },
+  tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  amount: { type: Number, required: true },
+  paymentDate: { type: Date, required: true },
+  paymentMode: { type: String, enum: ['bank_transfer', 'card', 'check', 'upi', 'other'], required: true },
+  transactionReference: { type: String, required: true },
+  status: { type: String, enum: ['received', 'failed', 'pending'], default: 'received' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Usage Log Interface
+export interface IUsageLog extends Document {
+  tenantId: mongoose.Types.ObjectId;
+  resourceType: 'vehicles' | 'drivers' | 'users';
+  currentUsage: number;
+  limit: number;
+  timestamp: Date;
+}
+
+// Usage Log Schema
+const UsageLogSchema = new Schema<IUsageLog>({
+  tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  resourceType: { type: String, enum: ['vehicles', 'drivers', 'users'], required: true },
+  currentUsage: { type: Number, required: true },
+  limit: { type: Number, required: true },
+  timestamp: { type: Date, default: Date.now }
+});
+
+// Entitlement Log Interface
+export interface IEntitlementLog extends Document {
+  tenantId: mongoose.Types.ObjectId;
+  action: string;
+  feature: string;
+  oldValue: any;
+  newValue: any;
+  changedAt: Date;
+}
+
+// Entitlement Log Schema
+const EntitlementLogSchema = new Schema<IEntitlementLog>({
+  tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  action: { type: String, required: true },
+  feature: { type: String, required: true },
+  oldValue: { type: Schema.Types.Mixed },
+  newValue: { type: Schema.Types.Mixed },
+  changedAt: { type: Date, default: Date.now }
+});
+
+// Create indexes for SaaS models
+PlanSchema.index({ code: 1 });
+PlanSchema.index({ status: 1 });
+
+SubscriptionSchema.index({ tenantId: 1 });
+SubscriptionSchema.index({ status: 1 });
+SubscriptionSchema.index({ renewalDate: 1 });
+
+SaaSInvoiceSchema.index({ tenantId: 1, createdAt: -1 });
+SaaSInvoiceSchema.index({ invoiceNumber: 1 });
+SaaSInvoiceSchema.index({ status: 1 });
+SaaSInvoiceSchema.index({ dueDate: 1 });
+
+SaaSPaymentSchema.index({ tenantId: 1, paymentDate: -1 });
+SaaSPaymentSchema.index({ invoiceId: 1 });
+
+UsageLogSchema.index({ tenantId: 1, resourceType: 1, timestamp: -1 });
+
+EntitlementLogSchema.index({ tenantId: 1, changedAt: -1 });
+
 // Create indexes for service operations
 ServiceTicketSchema.index({ tenantId: 1, status: 1 });
 ServiceTicketSchema.index({ tenantId: 1, priority: 1 });
@@ -1031,3 +1248,11 @@ export const OnboardingChecklist = mongoose.model<IOnboardingChecklist>('Onboard
 export const ServiceTicket = mongoose.model<IServiceTicket>('ServiceTicket', ServiceTicketSchema);
 export const FieldVisit = mongoose.model<IFieldVisit>('FieldVisit', FieldVisitSchema);
 export const SLAMetrics = mongoose.model<ISLAMetrics>('SLAMetrics', SLAMetricsSchema);
+
+// SaaS Billing Models
+export const Plan = mongoose.model<IPlan>('Plan', PlanSchema);
+export const Subscription = mongoose.model<ISubscription>('Subscription', SubscriptionSchema);
+export const SaaSInvoice = mongoose.model<ISaaSInvoice>('SaaSInvoice', SaaSInvoiceSchema);
+export const SaaSPayment = mongoose.model<ISaaSPayment>('SaaSPayment', SaaSPaymentSchema);
+export const UsageLog = mongoose.model<IUsageLog>('UsageLog', UsageLogSchema);
+export const EntitlementLog = mongoose.model<IEntitlementLog>('EntitlementLog', EntitlementLogSchema);

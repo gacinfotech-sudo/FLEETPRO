@@ -36,6 +36,7 @@ import {
 } from "./schemas/mongodb-schemas";
 import { LeaveManagementService } from "./services/LeaveManagementService";
 import driverOnboardingRoutes from "./routes/driverOnboardingRoutes.js";
+import plansRoutes from "./routes/plansRoutes";
 import { Attendance, DriverSalary, Driver } from "./models";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -2087,6 +2088,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Driver Onboarding Routes
   app.use("/api/driver-onboarding", driverOnboardingRoutes);
+
+  // ===== PHASE 3: SAAS BILLING ROUTES =====
+  // Register Plans Routes
+  app.use("/api", plansRoutes);
 
   // ===== WAVE 9: SERVICE OPERATIONS ROUTES =====
   const { ServiceTicketService } = await import('./services/ServiceTicketService');
