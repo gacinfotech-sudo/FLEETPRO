@@ -138,7 +138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static('uploads'));
 
   // Auth Routes with security enhancements
-  app.post("/api/auth/login", loginRateLimit, loginSpeedLimit, checkUserLockout, async (req, res) => {
+  app.post("/api/auth/login", checkUserLockout, async (req, res) => {
     console.log('Login attempt for:', req.body.userId);
     try {
       const { userId, password } = req.body;
