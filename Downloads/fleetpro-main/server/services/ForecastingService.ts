@@ -161,11 +161,11 @@ export class ForecastingService {
 
     // Detect anomalies
     if (forecast.anomalyDetectionEnabled) {
-      forecast.detectedAnomalies = this.detectAnomalies(forecast.trainingDataPoints);
+      forecast.detectedAnomalies = this.detectAnomaliesInData(forecast.trainingDataPoints);
     }
 
     // Analyze trend
-    forecast.trendAnalysis = this.analyzeTrend(forecast.trainingDataPoints);
+    forecast.trendAnalysis = this.analyzeTrendInData(forecast.trainingDataPoints);
 
     // Seasonal decomposition
     if (forecast.trainingDataPoints.length > 24) {
@@ -187,21 +187,21 @@ export class ForecastingService {
   /**
    * Analyze trend in historical data
    */
-  async analyzeTrend(forecastId: string): Promise<TrendAnalysis> {
+  async analyzeTrendPublic(forecastId: string): Promise<TrendAnalysis> {
     const forecast = this.forecasts.get(forecastId);
     if (!forecast) throw new Error('Forecast not found');
 
-    return this.analyzeTrend(forecast.trainingDataPoints);
+    return this.analyzeTrendInData(forecast.trainingDataPoints);
   }
 
   /**
    * Detect anomalies in time series data
    */
-  async detectAnomalies(forecastId: string): Promise<AnomalyPoint[]> {
+  async detectAnomaliesPublic(forecastId: string): Promise<AnomalyPoint[]> {
     const forecast = this.forecasts.get(forecastId);
     if (!forecast) throw new Error('Forecast not found');
 
-    return this.detectAnomalies(forecast.trainingDataPoints);
+    return this.detectAnomaliesInData(forecast.trainingDataPoints);
   }
 
   /**
@@ -359,7 +359,7 @@ export class ForecastingService {
     return { mae, rmse, mape, theil_u: 0.15 };
   }
 
-  private detectAnomalies(trainingData: TimeSeriesPoint[]): AnomalyPoint[] {
+  private detectAnomaliesInData(trainingData: TimeSeriesPoint[]): AnomalyPoint[] {
     const mean = trainingData.reduce((sum, p) => sum + p.value, 0) / trainingData.length;
     const stdDev = Math.sqrt(
       trainingData.reduce((sum, p) => sum + Math.pow(p.value - mean, 2), 0) / trainingData.length
@@ -376,7 +376,7 @@ export class ForecastingService {
       }));
   }
 
-  private analyzeTrend(trainingData: TimeSeriesPoint[]): TrendAnalysis {
+  private analyzeTrendInData(trainingData: TimeSeriesPoint[]): TrendAnalysis {
     const values = trainingData.map(p => p.value);
     const firstHalf = values.slice(0, Math.floor(values.length / 2));
     const secondHalf = values.slice(Math.floor(values.length / 2));

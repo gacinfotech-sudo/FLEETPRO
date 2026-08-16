@@ -40,7 +40,6 @@ interface TenantBrandingConfig {
     primaryColor: string;
   };
   customDomain?: string;
-  favicon: string;
   appIcons?: Record<string, string>; // size -> base64
   colorSchemes?: Record<string, any>; // custom schemes
   darkModeEnabled: boolean;

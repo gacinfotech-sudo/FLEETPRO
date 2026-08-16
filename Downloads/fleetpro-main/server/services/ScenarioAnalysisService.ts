@@ -116,16 +116,16 @@ interface BreakEvenAnalysis {
   contributionMarginRatio: number;
 }
 
+interface ScenarioComparison {
+  scenarios: string[];
+  metrics: Record<string, Record<string, number>>;
+  winner: string;
+  differences: Record<string, number>;
+}
+
 export class ScenarioAnalysisService {
   private scenarios: Map<string, Scenario> = new Map();
   private comparisons: Map<string, ScenarioComparison> = new Map();
-
-  interface ScenarioComparison {
-    scenarios: string[];
-    metrics: Record<string, Record<string, number>>;
-    winner: string;
-    differences: Record<string, number>;
-  }
 
   /**
    * Create a new scenario
