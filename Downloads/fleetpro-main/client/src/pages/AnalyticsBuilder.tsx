@@ -97,13 +97,13 @@ export default function AnalyticsBuilder() {
   const [anomalies, setAnomalies] = useState<any[]>([]);
 
   // Fetch cohorts
-  const { data: cohorts = MOCK_COHORT_DATA } = useQuery({
+  const { data: cohorts = MOCK_COHORT_DATA } = useQuery<CohortData[]>({
     queryKey: ["/api/analytics/cohorts"],
     enabled: !!user
   });
 
   // Fetch AB tests
-  const { data: abTests = MOCK_AB_TEST } = useQuery({
+  const { data: abTests = MOCK_AB_TEST } = useQuery<ABTestData[]>({
     queryKey: ["/api/analytics/experiments"],
     enabled: !!user
   });
@@ -344,7 +344,7 @@ export default function AnalyticsBuilder() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip formatter={(v) => `${v.toFixed(2)}%`} />
+                    <Tooltip formatter={(v: any) => `${(v as number).toFixed(2)}%`} />
                     <Bar dataKey="Conversion Rate" fill="#3b82f6" />
                   </BarChart>
                 </ResponsiveContainer>

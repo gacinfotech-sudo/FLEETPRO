@@ -381,7 +381,7 @@ export class AttendanceAutomationService {
   ): Promise<Array<{
     driverId: mongoose.Types.ObjectId;
     driverName: string;
-    status: AttendanceStatus;
+    status: AttendanceStatus | 'present' | 'absent';
     checkInTime?: Date;
     checkOutTime?: Date;
     totalHours?: number;
@@ -403,7 +403,7 @@ export class AttendanceAutomationService {
     return records.map((record) => ({
       driverId: record.driverId as mongoose.Types.ObjectId,
       driverName: (record.driverId as any)?.name || 'Unknown',
-      status: record.status,
+      status: record.status as any,
       checkInTime: record.checkInTime,
       checkOutTime: record.checkOutTime,
       totalHours: record.totalHours,
@@ -477,10 +477,10 @@ export class AttendanceAutomationService {
     const markedIds = new Set(marked.map((m) => m.driverId?.toString()));
 
     const missing = allDrivers
-      .filter((driver) => !markedIds.has(driver._id?.toString()))
+      .filter((driver) => !markedIds.has((driver._id as any)?.toString()))
       .map((driver) => ({
         driverId: driver._id as mongoose.Types.ObjectId,
-        driverName: driver.name,
+        driverName: driver.name as string,
         status: driver.status,
         reason: 'Attendance not marked'
       }));

@@ -470,26 +470,26 @@ export default function Dashboard() {
     });
   };
 
-  const { data: upcomingBookings = [] } = useQuery({
+  const { data: upcomingBookings = [] } = useQuery<any[]>({
     queryKey: ["/api/bookings/upcoming"],
     staleTime: 0,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
 
-  const { data: vehicles = [] } = useQuery({
+  const { data: vehicles = [] as any[] } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
   });
 
-  const { data: drivers = [] } = useQuery({
+  const { data: drivers = [] as any[] } = useQuery<any[]>({
     queryKey: ["/api/drivers"],
   });
 
-  const { data: bookings = [] } = useQuery({
+  const { data: bookings = [] as any[] } = useQuery<any[]>({
     queryKey: ["/api/bookings"],
   });
 
-  const { data: users = [] } = useQuery({
+  const { data: users = [] as any[] } = useQuery<any[]>({
     queryKey: ["/api/users/sub-users"],
     enabled: user?.role === 'client' || user?.role === 'admin',
   });

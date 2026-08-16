@@ -243,7 +243,7 @@ export class TenantBrandingService {
    */
   async configureEmailTemplate(
     tenantId: mongoose.Types.ObjectId,
-    template: Partial<TenantBrandingConfig['emailTemplate']>
+    template: Partial<TenantBrandingConfig['emailTemplate']> = {}
   ): Promise<TenantBrandingConfig['emailTemplate']> {
     const id = tenantId.toString();
     const config = this.brandingConfigs.get(id);
@@ -253,12 +253,12 @@ export class TenantBrandingService {
     }
 
     const updated = {
-      headerColor: template.headerColor || config.emailTemplate?.headerColor || '#FFFFFF',
-      footerColor: template.footerColor || config.emailTemplate?.footerColor || '#F3F4F6',
-      logoPosition: template.logoPosition || config.emailTemplate?.logoPosition || 'center',
-      companyName: template.companyName || config.emailTemplate?.companyName || '',
-      supportEmail: template.supportEmail || config.emailTemplate?.supportEmail || '',
-      supportPhone: template.supportPhone || config.emailTemplate?.supportPhone
+      headerColor: (template?.headerColor || config.emailTemplate?.headerColor || '#FFFFFF') as string,
+      footerColor: (template?.footerColor || config.emailTemplate?.footerColor || '#F3F4F6') as string,
+      logoPosition: (template?.logoPosition || config.emailTemplate?.logoPosition || 'center') as string,
+      companyName: (template?.companyName || config.emailTemplate?.companyName || '') as string,
+      supportEmail: (template?.supportEmail || config.emailTemplate?.supportEmail || '') as string,
+      supportPhone: (template?.supportPhone || config.emailTemplate?.supportPhone || '') as string | undefined
     };
 
     config.emailTemplate = updated;
@@ -272,7 +272,7 @@ export class TenantBrandingService {
    */
   async configureMobileApp(
     tenantId: mongoose.Types.ObjectId,
-    config: Partial<TenantBrandingConfig['mobileAppConfig']>
+    config: Partial<TenantBrandingConfig['mobileAppConfig']> = {}
   ): Promise<TenantBrandingConfig['mobileAppConfig']> {
     const id = tenantId.toString();
     const branding = this.brandingConfigs.get(id);
@@ -282,11 +282,11 @@ export class TenantBrandingService {
     }
 
     const updated = {
-      appName: config.appName || branding.mobileAppConfig?.appName || '',
-      appIcon: config.appIcon || branding.mobileAppConfig?.appIcon || '',
-      splashScreen: config.splashScreen || branding.mobileAppConfig?.splashScreen,
-      statusBarColor: config.statusBarColor || branding.mobileAppConfig?.statusBarColor || '#3B82F6',
-      primaryColor: config.primaryColor || branding.mobileAppConfig?.primaryColor || '#3B82F6'
+      appName: (config?.appName || branding.mobileAppConfig?.appName || '') as string,
+      appIcon: (config?.appIcon || branding.mobileAppConfig?.appIcon || '') as string,
+      splashScreen: (config?.splashScreen || branding.mobileAppConfig?.splashScreen) as string | undefined,
+      statusBarColor: (config?.statusBarColor || branding.mobileAppConfig?.statusBarColor || '#3B82F6') as string,
+      primaryColor: (config?.primaryColor || branding.mobileAppConfig?.primaryColor || '#3B82F6') as string
     };
 
     branding.mobileAppConfig = updated;

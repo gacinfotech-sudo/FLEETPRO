@@ -81,7 +81,7 @@ export class FieldVisitService {
     const savedVisit = await fieldVisit.save();
 
     // Add visit to ticket
-    await ticket.addToSet('fieldVisits', savedVisit._id);
+    await (ticket as any).addToSet('fieldVisits', savedVisit._id);
     await ticket.save();
 
     return savedVisit;

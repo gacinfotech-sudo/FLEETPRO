@@ -36,6 +36,7 @@ import {
 } from "./schemas/mongodb-schemas";
 import { LeaveManagementService } from "./services/LeaveManagementService";
 import driverOnboardingRoutes from "./routes/driverOnboardingRoutes.js";
+import { Attendance, DriverSalary, Driver } from "./models";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply enhanced security middleware
@@ -1695,7 +1696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       attendanceDate.setHours(0, 0, 0, 0);
 
       // Check if attendance already exists for this date
-      const existingAttendance = await storage.findOne("Attendance", {
+      const existingAttendance = await Attendance.findOne({
         tenantId: req.tenantId,
         driverId,
         date: {
@@ -1705,8 +1706,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Get driver salary info for salary cutoff calculation
-      const driver = await storage.findById("Driver", driverId);
-      const salary = await storage.findOne("DriverSalary", {
+      const driver = await Driver.findById(driverId);
+      const salary = await DriverSalary.findOne({
         tenantId: req.tenantId,
         driverId,
         status: "pending"
@@ -1738,10 +1739,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let attendance;
       if (existingAttendance) {
         // Update existing attendance
-        attendance = await storage.updateOne("Attendance", existingAttendance._id, attendanceData);
+        attendance = await Attendance.findByIdAndUpdate(existingAttendance._id, attendanceData, { new: true });
       } else {
         // Create new attendance
-        attendance = await storage.insertOne("Attendance", attendanceData);
+        attendance = await Attendance.create(attendanceData);
       }
 
       res.json({ message: "Attendance marked successfully", attendance });
@@ -1760,7 +1761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDate = new Date(Number(year), Number(month) - 1, 1);
       const endDate = new Date(Number(year), Number(month), 0);
 
-      const attendances = await storage.find("Attendance", {
+      const attendances = await Attendance.find({
         tenantId: req.tenantId,
         driverId,
         date: { $gte: startDate, $lte: endDate }
@@ -1797,7 +1798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDate = new Date(Number(year), Number(month) - 1, 1);
       const endDate = new Date(Number(year), Number(month), 0);
 
-      const attendances = await storage.find("Attendance", {
+      const attendances = await Attendance.find({
         tenantId: req.tenantId,
         driverId,
         date: { $gte: startDate, $lte: endDate }
@@ -1824,7 +1825,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { attendanceId } = req.params;
       const { status, leaveType, notes, workHours } = req.body;
 
-      const attendance = await storage.findById("Attendance", attendanceId);
+      const attendance = await Attendance.findById(attendanceId);
       if (!attendance) {
         return res.status(404).json({ message: "Attendance record not found" });
       }
@@ -1835,7 +1836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get driver salary info for salary cutoff calculation
-      const salary = await storage.findOne("DriverSalary", {
+      const salary = await DriverSalary.findOne({
         tenantId: req.tenantId,
         driverId: attendance.driverId,
         status: "pending"
@@ -1855,7 +1856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       };
 
-      const updatedAttendance = await storage.updateOne("Attendance", attendanceId, updateData);
+      const updatedAttendance = await Attendance.findByIdAndUpdate(attendanceId, updateData, { new: true });
       res.json({ message: "Attendance updated successfully", attendance: updatedAttendance });
     } catch (error) {
       console.error("Edit attendance error:", error);
@@ -1869,7 +1870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { driverId } = req.params;
 
       // Get all attendances for the driver
-      const allAttendances = await storage.find("Attendance", {
+      const allAttendances = await Attendance.find({
         tenantId: req.tenantId,
         driverId
       });

@@ -118,7 +118,7 @@ export class PredictiveAnalyticsService {
       const recommendedActions = this.getChurnMitigationActions(factors);
 
       results.push({
-        driverId: driver._id.toString(),
+        driverId: (driver._id as any).toString(),
         churnProbability: probability,
         riskLevel,
         factors,
@@ -199,7 +199,7 @@ export class PredictiveAnalyticsService {
 
       predictions.push(...predictions_local.map(p => ({
         ...p,
-        vehicleId: vehicle._id.toString()
+        vehicleId: (vehicle._id as any).toString()
       })));
     }
 
@@ -266,7 +266,7 @@ export class PredictiveAnalyticsService {
           anomalyType: 'unusual_pricing',
           severity: 'medium',
           description: `Booking amount ${booking.totalAmount} deviates significantly from average ${avgPrice}`,
-          affectedEntity: booking._id.toString(),
+          affectedEntity: (booking._id as any).toString(),
           confidence: 0.92
         });
       }
@@ -278,7 +278,7 @@ export class PredictiveAnalyticsService {
           anomalyType: 'long_distance_trip',
           severity: 'medium',
           description: `Unusual long distance trip: ${booking.totalKilometers} km`,
-          affectedEntity: booking._id.toString(),
+          affectedEntity: (booking._id as any).toString(),
           confidence: 0.88
         });
       }

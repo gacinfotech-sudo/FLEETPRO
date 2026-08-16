@@ -32,7 +32,7 @@ export class EngineerAssignmentService {
 
     // If no engineer specified, load balance
     if (!selectedEngineerId) {
-      selectedEngineerId = await this.getAvailableEngineer(tenantId);
+      selectedEngineerId = (await this.getAvailableEngineer(tenantId)) || undefined;
     }
 
     if (!selectedEngineerId) {

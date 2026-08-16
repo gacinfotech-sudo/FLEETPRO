@@ -307,7 +307,7 @@ export class ApiCustomizationService {
    */
   async generateApiDocumentation(
     tenantId: mongoose.Types.ObjectId,
-    endpoints: ApiDocumentation['endpoints'][]
+    endpoints: ApiDocumentation['endpoints']
   ): Promise<ApiDocumentation> {
     const doc: ApiDocumentation = {
       tenantId,

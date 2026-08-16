@@ -58,6 +58,7 @@ interface ModelVersion {
   precision: number;
   recall: number;
   f1Score: number;
+  auc?: number;
   status: 'active' | 'archived' | 'rollback';
   performanceMetrics: PipelineMetrics;
   hyperparameters: Record<string, any>;
@@ -365,7 +366,7 @@ export class MLPipelineService {
       precision: activeVersion.precision - (Math.random() * 0.03),
       recall: activeVersion.recall - (Math.random() * 0.04),
       f1Score: activeVersion.f1Score - (Math.random() * 0.04),
-      auc: activeVersion.auc - (Math.random() * 0.02)
+      auc: (activeVersion.auc || 0.85) - (Math.random() * 0.02)
     };
 
     const drift = Math.abs(activeVersion.accuracy - currentMetrics.accuracy);

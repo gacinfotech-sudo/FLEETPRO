@@ -273,7 +273,7 @@ export class WhiteLabelService {
    */
   async addDocumentation(
     tenantId: mongoose.Types.ObjectId,
-    doc: Omit<WhiteLabelConfig['tenantDocumentation'][number], '_id'>
+    doc: any
   ): Promise<void> {
     const config = this.whiteLabelConfigs.get(tenantId.toString());
 
@@ -285,7 +285,7 @@ export class WhiteLabelService {
       config.tenantDocumentation = [];
     }
 
-    config.tenantDocumentation.push(doc);
+    config.tenantDocumentation.push(doc as any);
     this.whiteLabelConfigs.set(tenantId.toString(), config);
   }
 
@@ -294,7 +294,7 @@ export class WhiteLabelService {
    */
   async configureMobileApp(
     tenantId: mongoose.Types.ObjectId,
-    appConfig: Partial<WhiteLabelConfig['customMobileApp']>
+    appConfig: Partial<WhiteLabelConfig['customMobileApp']> = {}
   ): Promise<WhiteLabelConfig['customMobileApp']> {
     const config = this.whiteLabelConfigs.get(tenantId.toString());
 
@@ -303,11 +303,11 @@ export class WhiteLabelService {
     }
 
     const updated = {
-      androidAPK: appConfig.androidAPK || config.customMobileApp?.androidAPK,
-      iosIPA: appConfig.iosIPA || config.customMobileApp?.iosIPA,
-      buildVersion: appConfig.buildVersion || config.customMobileApp?.buildVersion || '1.0.0',
-      lastBuildDate: appConfig.lastBuildDate || new Date(),
-      buildStatus: appConfig.buildStatus || 'ready'
+      androidAPK: appConfig?.androidAPK || config.customMobileApp?.androidAPK,
+      iosIPA: appConfig?.iosIPA || config.customMobileApp?.iosIPA,
+      buildVersion: appConfig?.buildVersion || config.customMobileApp?.buildVersion || '1.0.0',
+      lastBuildDate: appConfig?.lastBuildDate || new Date(),
+      buildStatus: appConfig?.buildStatus || 'ready'
     };
 
     config.customMobileApp = updated;

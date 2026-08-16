@@ -79,7 +79,7 @@ export class TenantCustomFieldsService {
    */
   async createField(
     tenantId: mongoose.Types.ObjectId,
-    field: Omit<CustomField, '_id' | 'createdAt' | 'updatedAt' | 'fieldId'>
+    field: Omit<CustomField, '_id' | 'createdAt' | 'updatedAt' | 'fieldId' | 'tenantId'>
   ): Promise<CustomField> {
     const fieldId = `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const tenantIdStr = tenantId.toString();
@@ -400,10 +400,10 @@ export class TenantCustomFieldsService {
           label: field.label,
           type: field.type,
           required: field.required,
-          description: field.description,
-          placeholder: field.placeholder,
+          description: field.description || undefined,
+          placeholder: field.placeholder || undefined,
           defaultValue: field.defaultValue,
-          options: field.options,
+          options: field.options || undefined,
           validation: field.validation,
           conditional: field.conditional,
           permissions: field.permissions,

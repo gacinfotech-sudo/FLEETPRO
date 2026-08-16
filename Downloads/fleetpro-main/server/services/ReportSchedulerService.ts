@@ -46,7 +46,7 @@ interface ReportDelivery {
 
 interface DeliveryChannelResult {
   channel: string;
-  status: 'success' | 'failed';
+  status: 'success' | 'failed' | 'partial_failure';
   failureReason?: string;
   recipientCount: number;
   successCount: number;

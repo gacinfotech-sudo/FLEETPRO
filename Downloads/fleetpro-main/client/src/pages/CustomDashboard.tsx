@@ -82,7 +82,7 @@ export default function CustomDashboard() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
 
   // Fetch dashboards
-  const { data: dashboardList = [], isLoading } = useQuery({
+  const { data: dashboardList = [] as Dashboard[], isLoading } = useQuery<Dashboard[]>({
     queryKey: ["/api/dashboards"],
     enabled: !!user
   });

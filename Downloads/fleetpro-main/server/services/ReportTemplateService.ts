@@ -104,7 +104,7 @@ export class ReportTemplateService {
    */
   async createTemplate(
     tenantId: mongoose.Types.ObjectId,
-    template: Omit<ReportTemplate, '_id' | 'createdAt' | 'updatedAt' | 'templateId'>
+    template: Omit<ReportTemplate, '_id' | 'createdAt' | 'updatedAt' | 'templateId' | 'tenantId'>
   ): Promise<ReportTemplate> {
     const templateId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const tenantIdStr = tenantId.toString();
@@ -228,9 +228,11 @@ export class ReportTemplateService {
     const template = await this.getTemplate(tenantId, templateId);
 
     template.watermark = {
-      ...template.watermark,
-      ...watermark
-    };
+      enabled: watermark?.enabled ?? template.watermark?.enabled ?? true,
+      text: watermark?.text ?? template.watermark?.text ?? 'DRAFT',
+      opacity: watermark?.opacity ?? template.watermark?.opacity ?? 0.3,
+      rotation: watermark?.rotation ?? template.watermark?.rotation ?? 45
+    } as ReportTemplate['watermark'];
     template.updatedAt = new Date();
 
     return template.watermark!;
@@ -247,12 +249,14 @@ export class ReportTemplateService {
     const template = await this.getTemplate(tenantId, templateId);
 
     template.scheduling = {
-      ...template.scheduling,
-      ...scheduling
-    };
+      frequency: scheduling?.frequency ?? template.scheduling?.frequency ?? 'daily',
+      dayOfWeek: scheduling?.dayOfWeek ?? template.scheduling?.dayOfWeek,
+      dayOfMonth: scheduling?.dayOfMonth ?? template.scheduling?.dayOfMonth,
+      time: scheduling?.time ?? template.scheduling?.time ?? '09:00'
+    } as ReportTemplate['scheduling'];
     template.updatedAt = new Date();
 
-    return template.scheduling!;
+    return template.scheduling;
   }
 
   /**
@@ -266,12 +270,13 @@ export class ReportTemplateService {
     const template = await this.getTemplate(tenantId, templateId);
 
     template.distribution = {
-      ...template.distribution,
-      ...distribution
-    };
+      recipients: distribution?.recipients ?? template.distribution?.recipients ?? [],
+      format: distribution?.format ?? template.distribution?.format ?? 'pdf',
+      attachPDF: distribution?.attachPDF ?? template.distribution?.attachPDF ?? false
+    } as ReportTemplate['distribution'];
     template.updatedAt = new Date();
 
-    return template.distribution!;
+    return template.distribution;
   }
 
   /**
@@ -285,9 +290,10 @@ export class ReportTemplateService {
     const template = await this.getTemplate(tenantId, templateId);
 
     template.approvalWorkflow = {
-      ...template.approvalWorkflow,
-      ...workflow
-    };
+      requiresApproval: workflow?.requiresApproval ?? template.approvalWorkflow?.requiresApproval ?? false,
+      approvers: workflow?.approvers ?? template.approvalWorkflow?.approvers ?? [],
+      reviewComments: workflow?.reviewComments ?? template.approvalWorkflow?.reviewComments
+    } as ReportTemplate['approvalWorkflow'];
     template.updatedAt = new Date();
 
     return template.approvalWorkflow!;

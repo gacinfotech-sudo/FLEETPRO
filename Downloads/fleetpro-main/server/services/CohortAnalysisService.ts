@@ -217,11 +217,10 @@ export class CohortAnalysisService {
       const retentionRate = cohort.memberCount > 0 ? retainedCount / cohort.memberCount : 0;
 
       // Calculate churn in this period
-      const previousActive = new Set(
-        period > 0
+      const previousActiveCount = period > 0
           ? (retentionData[period - 1]?.activeCount || 0)
-          : cohort.memberCount
-      );
+          : cohort.memberCount;
+      const previousActive = new Set([previousActiveCount]);
 
       retentionData.push({
         cohortId,
