@@ -10,6 +10,7 @@ import LandingPage from "./pages/landing";
 import LoginPage from "./pages/login";
 import AdminPanel from "./pages/admin-panel";
 import Dashboard from "./pages/dashboard";
+import TenantSettings from "./pages/TenantSettings";
 import ForcedPasswordResetPage from "./pages/forced-password-reset";
 import NotFound from "@/pages/not-found";
 import ProtectedRoute from "@/components/auth/protected-route";
@@ -64,7 +65,14 @@ function AuthenticatedApp() {
           )}
         </ProtectedRoute>
       </Route>
-      
+
+      {/* Tenant Settings */}
+      <Route path="/tenant-settings/:tab?">
+        <ProtectedRoute allowedRoles={["client", "admin"]}>
+          <TenantSettings key={user?.userId} />
+        </ProtectedRoute>
+      </Route>
+
       {/* Fallback route for any unknown paths - redirects to appropriate dashboard */}
       <Route>
         {loading ? (
