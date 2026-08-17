@@ -2,20 +2,122 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 // Interfaces for TypeScript
 export interface ITenant extends Document {
+  // BASIC INFO (existing)
   name: string;
   businessName: string;
   email?: string;
   phone?: string;
   address?: string;
   isActive: boolean;
-  maxManagers: number; // Maximum allowed managers per client (default: 5)
-  subscriptionPlan: 'starter' | 'pro' | 'custom';
+  maxManagers?: number;
+
+  // SUBSCRIPTION & BILLING (NEW)
+  subscriptionPlan: 'starter' | 'pro' | 'enterprise' | 'custom';
+  billingCycle?: 'monthly' | 'yearly' | 'quarterly';
+  billingEmail?: string;
+  taxId?: string;
+  paymentMethod?: 'credit_card' | 'bank_transfer' | 'upi';
+  billingAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  invoicePrefix?: string;
+  trialEndsAt?: Date;
+
+  // BRANDING & CUSTOMIZATION (NEW)
+  branding?: {
+    logoUrl?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+    theme?: 'light' | 'dark' | 'auto';
+    customDomain?: string;
+    faviconUrl?: string;
+  };
+
+  // CONFIGURATION (NEW)
+  timezone?: string;
+  currency?: string;
+  language?: string;
+  dateFormat?: string;
+
+  // FEATURES & ENTITLEMENTS (NEW)
+  features?: {
+    apiAccess?: boolean;
+    customReports?: boolean;
+    advancedAnalytics?: boolean;
+    whiteLabel?: boolean;
+    multiUserAdmin?: boolean;
+    sso?: boolean;
+    webhooks?: boolean;
+  };
+
+  // API & INTEGRATION (NEW)
+  apiKeys?: Array<{
+    name: string;
+    key: string;
+    secret?: string;
+    createdAt: Date;
+    lastUsed?: Date;
+    active: boolean;
+  }>;
+  webhookUrl?: string;
+  webhookEvents?: string[];
+
+  // SECURITY (NEW)
+  security?: {
+    twoFactorEnabled?: boolean;
+    ipWhitelist?: string[];
+    encryptionEnabled?: boolean;
+    ssoProvider?: 'google' | 'microsoft' | 'okta';
+    passwordPolicy?: {
+      minLength?: number;
+      requireUppercase?: boolean;
+      requireNumbers?: boolean;
+      requireSpecialChars?: boolean;
+    };
+  };
+
+  // COMPLIANCE (NEW)
+  compliance?: {
+    gstRegistered?: boolean;
+    gstNumber?: string;
+    businessRegistration?: string;
+    termsAcceptedAt?: Date;
+    dataRetentionDays?: number;
+    gdprCompliant?: boolean;
+  };
+
+  // USAGE TRACKING (NEW)
+  usageStats?: {
+    activeUsers?: number;
+    apiCallsThisMonth?: number;
+    storageUsedMB?: number;
+    lastCalculatedAt?: Date;
+  };
+
+  // LIMITS (updated)
   limits: {
     vehicles: number;
     drivers: number;
     managers: number;
+    users?: number;
+    apiCallsPerMonth?: number;
+    storageGB?: number;
   };
+
+  // METADATA (NEW)
+  metadata?: Record<string, any>;
+  tags?: string[];
+  notes?: string;
+
+  // TIMESTAMPS (NEW)
   createdAt: Date;
+  updatedAt?: Date;
+  deletedAt?: Date;
+  lastBilledAt?: Date;
 }
 
 export interface IUser extends Document {
@@ -330,27 +432,148 @@ export interface IOnboardingChecklist extends Document {
   updatedAt: Date;
 }
 
-// Tenant Schema
+// Tenant Schema (V2 - Enterprise Grade)
 const TenantSchema = new Schema<ITenant>({
+  // BASIC INFO
   name: { type: String, required: true },
   businessName: { type: String, required: true },
-  email: { type: String },
+  email: { type: String, sparse: true },
   phone: { type: String },
   address: { type: String },
   isActive: { type: Boolean, default: true },
-  maxManagers: { type: Number, default: 5 }, // Kept for backward compatibility
-  subscriptionPlan: { 
-    type: String, 
-    enum: ['starter', 'pro', 'custom'], 
-    default: 'starter' 
+  maxManagers: { type: Number, default: 5 },
+
+  // SUBSCRIPTION & BILLING
+  subscriptionPlan: {
+    type: String,
+    enum: ['starter', 'pro', 'enterprise', 'custom'],
+    default: 'starter'
   },
+  billingCycle: {
+    type: String,
+    enum: ['monthly', 'yearly', 'quarterly'],
+    default: 'monthly'
+  },
+  billingEmail: { type: String },
+  taxId: { type: String },
+  paymentMethod: {
+    type: String,
+    enum: ['credit_card', 'bank_transfer', 'upi']
+  },
+  billingAddress: {
+    street: { type: String },
+    city: { type: String },
+    state: { type: String },
+    zipCode: { type: String },
+    country: { type: String }
+  },
+  invoicePrefix: { type: String, default: 'INV' },
+  trialEndsAt: { type: Date },
+
+  // BRANDING & CUSTOMIZATION
+  branding: {
+    logoUrl: { type: String },
+    primaryColor: { type: String, default: '#007AFF' },
+    secondaryColor: { type: String, default: '#34C759' },
+    theme: { type: String, enum: ['light', 'dark', 'auto'], default: 'auto' },
+    customDomain: { type: String },
+    faviconUrl: { type: String }
+  },
+
+  // CONFIGURATION
+  timezone: { type: String, default: 'Asia/Kolkata' },
+  currency: { type: String, default: 'INR' },
+  language: { type: String, default: 'en' },
+  dateFormat: { type: String, default: 'DD/MM/YYYY' },
+
+  // FEATURES & ENTITLEMENTS
+  features: {
+    apiAccess: { type: Boolean, default: false },
+    customReports: { type: Boolean, default: false },
+    advancedAnalytics: { type: Boolean, default: false },
+    whiteLabel: { type: Boolean, default: false },
+    multiUserAdmin: { type: Boolean, default: false },
+    sso: { type: Boolean, default: false },
+    webhooks: { type: Boolean, default: false }
+  },
+
+  // API & INTEGRATION
+  apiKeys: [{
+    name: { type: String, required: true },
+    key: { type: String, required: true, unique: true },
+    secret: { type: String },
+    createdAt: { type: Date, default: Date.now },
+    lastUsed: { type: Date },
+    active: { type: Boolean, default: true }
+  }],
+  webhookUrl: { type: String },
+  webhookEvents: [{ type: String }],
+
+  // SECURITY
+  security: {
+    twoFactorEnabled: { type: Boolean, default: false },
+    ipWhitelist: [{ type: String }],
+    encryptionEnabled: { type: Boolean, default: true },
+    ssoProvider: {
+      type: String,
+      enum: ['google', 'microsoft', 'okta']
+    },
+    passwordPolicy: {
+      minLength: { type: Number, default: 8 },
+      requireUppercase: { type: Boolean, default: true },
+      requireNumbers: { type: Boolean, default: true },
+      requireSpecialChars: { type: Boolean, default: false }
+    }
+  },
+
+  // COMPLIANCE
+  compliance: {
+    gstRegistered: { type: Boolean, default: false },
+    gstNumber: { type: String },
+    businessRegistration: { type: String },
+    termsAcceptedAt: { type: Date },
+    dataRetentionDays: { type: Number, default: 365 },
+    gdprCompliant: { type: Boolean, default: false }
+  },
+
+  // USAGE TRACKING
+  usageStats: {
+    activeUsers: { type: Number, default: 0 },
+    apiCallsThisMonth: { type: Number, default: 0 },
+    storageUsedMB: { type: Number, default: 0 },
+    lastCalculatedAt: { type: Date, default: Date.now }
+  },
+
+  // LIMITS
   limits: {
-    vehicles: { type: Number, default: 6 }, // Starter plan default
-    drivers: { type: Number, default: 3 },  // Starter plan default
-    managers: { type: Number, default: 1 }  // Starter plan default
+    vehicles: { type: Number, default: 6 },
+    drivers: { type: Number, default: 3 },
+    managers: { type: Number, default: 1 },
+    users: { type: Number, default: 5 },
+    apiCallsPerMonth: { type: Number, default: 10000 },
+    storageGB: { type: Number, default: 10 }
   },
-  createdAt: { type: Date, default: Date.now }
+
+  // METADATA
+  metadata: { type: Schema.Types.Mixed },
+  tags: [{ type: String }],
+  notes: { type: String },
+
+  // TIMESTAMPS
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  deletedAt: { type: Date }, // For soft deletes
+  lastBilledAt: { type: Date }
 });
+
+// Tenant Schema Indexes (V2)
+TenantSchema.index({ email: 1 }, { sparse: true });
+TenantSchema.index({ 'apiKeys.key': 1 }, { sparse: true });
+TenantSchema.index({ createdAt: -1 });
+TenantSchema.index({ subscriptionPlan: 1, isActive: 1 });
+TenantSchema.index({ deletedAt: 1 }, { sparse: true });
+TenantSchema.index({ billingCycle: 1, lastBilledAt: 1 });
+TenantSchema.index({ tags: 1 });
 
 // User Schema
 const UserSchema = new Schema<IUser>({

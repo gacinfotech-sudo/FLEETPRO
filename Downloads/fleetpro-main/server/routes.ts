@@ -2602,6 +2602,290 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== TENANT V2 ENTERPRISE FEATURES ====================
+
+  // POST /api/tenants/:id/api-keys - Create API key
+  app.post("/api/tenants/:id/api-keys", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { name } = req.body;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const result = await storage.createApiKey(id, name || "API Key");
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error("Create API key error:", error);
+      res.status(500).json({ message: error.message || "Failed to create API key" });
+    }
+  });
+
+  // GET /api/tenants/:id/api-keys - List API keys
+  app.get("/api/tenants/:id/api-keys", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const keys = await storage.listApiKeys(id);
+      res.json({ keys });
+    } catch (error: any) {
+      console.error("List API keys error:", error);
+      res.status(500).json({ message: error.message || "Failed to list API keys" });
+    }
+  });
+
+  // DELETE /api/tenants/:id/api-keys/:keyName - Revoke API key
+  app.delete("/api/tenants/:id/api-keys/:keyName", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id, keyName } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      await storage.revokeApiKey(id, keyName);
+      res.json({ success: true, message: "API key revoked" });
+    } catch (error: any) {
+      console.error("Revoke API key error:", error);
+      res.status(500).json({ message: error.message || "Failed to revoke API key" });
+    }
+  });
+
+  // POST /api/tenants/:id/branding - Update branding
+  app.post("/api/tenants/:id/branding", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const tenant = await storage.updateTenantBranding(id, req.body);
+      res.json({ success: true, tenant });
+    } catch (error: any) {
+      console.error("Update branding error:", error);
+      res.status(500).json({ message: error.message || "Failed to update branding" });
+    }
+  });
+
+  // GET /api/tenants/:id/branding - Get branding
+  app.get("/api/tenants/:id/branding", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const branding = await storage.getBranding(id);
+      res.json({ branding });
+    } catch (error: any) {
+      console.error("Get branding error:", error);
+      res.status(500).json({ message: error.message || "Failed to get branding" });
+    }
+  });
+
+  // PUT /api/tenants/:id/settings - Update settings
+  app.put("/api/tenants/:id/settings", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const tenant = await storage.updateTenantSettings(id, req.body);
+      res.json({ success: true, tenant });
+    } catch (error: any) {
+      console.error("Update settings error:", error);
+      res.status(500).json({ message: error.message || "Failed to update settings" });
+    }
+  });
+
+  // GET /api/tenants/:id/settings - Get settings
+  app.get("/api/tenants/:id/settings", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const settings = await storage.getTenantSettings(id);
+      res.json({ settings });
+    } catch (error: any) {
+      console.error("Get settings error:", error);
+      res.status(500).json({ message: error.message || "Failed to get settings" });
+    }
+  });
+
+  // GET /api/tenants/:id/usage - Get usage stats
+  app.get("/api/tenants/:id/usage", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const stats = await storage.getTenantUsageStats(id);
+      res.json({ stats });
+    } catch (error: any) {
+      console.error("Get usage stats error:", error);
+      res.status(500).json({ message: error.message || "Failed to get usage stats" });
+    }
+  });
+
+  // POST /api/tenants/:id/webhook - Configure webhook
+  app.post("/api/tenants/:id/webhook", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { url, events } = req.body;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      await storage.configureWebhook(id, url, events || []);
+      res.json({ success: true, message: "Webhook configured" });
+    } catch (error: any) {
+      console.error("Configure webhook error:", error);
+      res.status(500).json({ message: error.message || "Failed to configure webhook" });
+    }
+  });
+
+  // GET /api/tenants/:id/webhook - Get webhook config
+  app.get("/api/tenants/:id/webhook", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const config = await storage.getWebhookConfig(id);
+      res.json({ config });
+    } catch (error: any) {
+      console.error("Get webhook config error:", error);
+      res.status(500).json({ message: error.message || "Failed to get webhook config" });
+    }
+  });
+
+  // POST /api/tenants/:id/upgrade-plan - Upgrade subscription
+  app.post("/api/tenants/:id/upgrade-plan", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { plan } = req.body;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const tenant = await storage.upgradeSubscriptionPlan(id, plan);
+      res.json({ success: true, tenant });
+    } catch (error: any) {
+      console.error("Upgrade plan error:", error);
+      res.status(500).json({ message: error.message || "Failed to upgrade plan" });
+    }
+  });
+
+  // GET /api/tenants/:id/billing - Get billing info
+  app.get("/api/tenants/:id/billing", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const billing = await storage.getBillingInfo(id);
+      res.json({ billing });
+    } catch (error: any) {
+      console.error("Get billing info error:", error);
+      res.status(500).json({ message: error.message || "Failed to get billing info" });
+    }
+  });
+
+  // GET /api/tenants/:id/features - Get features
+  app.get("/api/tenants/:id/features", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const features = await storage.getFeatures(id);
+      res.json({ features });
+    } catch (error: any) {
+      console.error("Get features error:", error);
+      res.status(500).json({ message: error.message || "Failed to get features" });
+    }
+  });
+
+  // PUT /api/tenants/:id/features - Update features
+  app.put("/api/tenants/:id/features", authenticateUser, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenant = await storage.updateTenantFeatures(id, req.body);
+      res.json({ success: true, tenant });
+    } catch (error: any) {
+      console.error("Update features error:", error);
+      res.status(500).json({ message: error.message || "Failed to update features" });
+    }
+  });
+
+  // POST /api/tenants/:id/export-data - Export tenant data
+  app.post("/api/tenants/:id/export-data", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user?.tenantId?.toString();
+
+      if (tenantId !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Collect all tenant data
+      const tenant = await storage.getTenant(id);
+      const vehicles = await storage.getVehiclesByTenant(id);
+      const drivers = await storage.getDriversByTenant(id);
+      const bookings = await storage.getBookingsByTenant(id);
+      const users = await storage.getUsersByTenant(id);
+
+      const exportData = {
+        tenant,
+        vehicles,
+        drivers,
+        bookings,
+        users,
+        exportedAt: new Date()
+      };
+
+      res.json({ success: true, data: exportData });
+    } catch (error: any) {
+      console.error("Export data error:", error);
+      res.status(500).json({ message: error.message || "Failed to export data" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

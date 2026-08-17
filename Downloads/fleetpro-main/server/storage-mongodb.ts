@@ -137,6 +137,33 @@ export interface IStorage {
   find(modelName: string, query: any): Promise<any[]>;
   updateOne(modelName: string, query: any, update: any): Promise<any>;
   insertOne(modelName: string, data: any): Promise<any>;
+
+  // Tenant V2 Enterprise Features
+  createApiKey(tenantId: string, keyName: string): Promise<{ key: string; secret: string }>;
+  revokeApiKey(tenantId: string, keyId: string): Promise<void>;
+  listApiKeys(tenantId: string): Promise<Array<{ name: string; key: string; active: boolean; createdAt: Date; lastUsed?: Date }>>;
+
+  updateTenantBranding(tenantId: string, branding: any): Promise<ITenant | undefined>;
+  getBranding(tenantId: string): Promise<any | undefined>;
+
+  updateTenantSettings(tenantId: string, settings: any): Promise<ITenant | undefined>;
+  getTenantSettings(tenantId: string): Promise<any | undefined>;
+
+  getTenantUsageStats(tenantId: string): Promise<any>;
+  updateUsageStats(tenantId: string, stats: any): Promise<void>;
+
+  softDeleteTenant(tenantId: string): Promise<void>;
+  restoreTenant(tenantId: string): Promise<void>;
+
+  updateTenantFeatures(tenantId: string, features: any): Promise<ITenant | undefined>;
+  getFeatures(tenantId: string): Promise<any>;
+
+  configureWebhook(tenantId: string, webhookUrl: string, events: string[]): Promise<void>;
+  getWebhookConfig(tenantId: string): Promise<{ url?: string; events?: string[] } | undefined>;
+
+  upgradeSubscriptionPlan(tenantId: string, newPlan: string): Promise<ITenant | undefined>;
+  getBillingInfo(tenantId: string): Promise<any>;
+  recordBillingEvent(tenantId: string, event: string, details: any): Promise<void>;
 }
 
 export class MongoDBStorage implements IStorage {
@@ -1456,6 +1483,360 @@ export class MongoDBStorage implements IStorage {
       return doc;
     } catch (error) {
       console.error(`Error inserting ${modelName}:`, error);
+      throw error;
+    }
+  }
+
+  // ==================== TENANT V2 ENTERPRISE FEATURES ====================
+
+  /**
+   * Create a new API key for a tenant
+   * @param tenantId - The tenant ID
+   * @param keyName - A descriptive name for the API key
+   * @returns Object with generated key and secret
+   */
+  async createApiKey(tenantId: string, keyName: string): Promise<{ key: string; secret: string }> {
+    try {
+      const key = nanoid(32);
+      const secret = nanoid(64);
+
+      await Tenant.findByIdAndUpdate(
+        tenantId,
+        {
+          $push: {
+            apiKeys: {
+              name: keyName,
+              key,
+              secret,
+              createdAt: new Date(),
+              active: true
+            }
+          }
+        },
+        { new: true }
+      );
+
+      return { key, secret };
+    } catch (error) {
+      console.error('Error creating API key:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Revoke an API key
+   * @param tenantId - The tenant ID
+   * @param keyId - The key name or ID to revoke
+   */
+  async revokeApiKey(tenantId: string, keyId: string): Promise<void> {
+    try {
+      await Tenant.findByIdAndUpdate(
+        tenantId,
+        {
+          $set: {
+            'apiKeys.$[elem].active': false
+          }
+        },
+        {
+          arrayFilters: [{ 'elem.name': keyId }],
+          new: true
+        }
+      );
+    } catch (error) {
+      console.error('Error revoking API key:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * List all API keys for a tenant
+   */
+  async listApiKeys(tenantId: string): Promise<Array<{ name: string; key: string; active: boolean; createdAt: Date; lastUsed?: Date }>> {
+    try {
+      const tenant = await Tenant.findById(tenantId).select('apiKeys');
+      return tenant?.apiKeys || [];
+    } catch (error) {
+      console.error('Error listing API keys:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Update tenant branding configuration
+   */
+  async updateTenantBranding(tenantId: string, branding: any): Promise<ITenant | undefined> {
+    try {
+      return await Tenant.findByIdAndUpdate(
+        tenantId,
+        { branding, updatedAt: new Date() },
+        { new: true }
+      );
+    } catch (error) {
+      console.error('Error updating tenant branding:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get tenant branding configuration
+   */
+  async getBranding(tenantId: string): Promise<any | undefined> {
+    try {
+      const tenant = await Tenant.findById(tenantId).select('branding');
+      return tenant?.branding;
+    } catch (error) {
+      console.error('Error getting branding:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Update tenant settings (timezone, currency, language, date format)
+   */
+  async updateTenantSettings(tenantId: string, settings: any): Promise<ITenant | undefined> {
+    try {
+      const updateData: any = { updatedAt: new Date() };
+      if (settings.timezone) updateData.timezone = settings.timezone;
+      if (settings.currency) updateData.currency = settings.currency;
+      if (settings.language) updateData.language = settings.language;
+      if (settings.dateFormat) updateData.dateFormat = settings.dateFormat;
+
+      return await Tenant.findByIdAndUpdate(tenantId, updateData, { new: true });
+    } catch (error) {
+      console.error('Error updating tenant settings:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get tenant settings
+   */
+  async getTenantSettings(tenantId: string): Promise<any | undefined> {
+    try {
+      const tenant = await Tenant.findById(tenantId).select(
+        'timezone currency language dateFormat'
+      );
+      return tenant ? {
+        timezone: tenant.timezone,
+        currency: tenant.currency,
+        language: tenant.language,
+        dateFormat: tenant.dateFormat
+      } : undefined;
+    } catch (error) {
+      console.error('Error getting tenant settings:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get tenant usage statistics
+   */
+  async getTenantUsageStats(tenantId: string): Promise<any> {
+    try {
+      const tenant = await Tenant.findById(tenantId).select('usageStats');
+      return tenant?.usageStats || {
+        activeUsers: 0,
+        apiCallsThisMonth: 0,
+        storageUsedMB: 0,
+        lastCalculatedAt: new Date()
+      };
+    } catch (error) {
+      console.error('Error getting usage stats:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update usage statistics
+   */
+  async updateUsageStats(tenantId: string, stats: any): Promise<void> {
+    try {
+      await Tenant.findByIdAndUpdate(
+        tenantId,
+        {
+          usageStats: {
+            ...stats,
+            lastCalculatedAt: new Date()
+          },
+          updatedAt: new Date()
+        },
+        { new: true }
+      );
+    } catch (error) {
+      console.error('Error updating usage stats:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Soft delete a tenant (mark as deleted but don't remove)
+   */
+  async softDeleteTenant(tenantId: string): Promise<void> {
+    try {
+      await Tenant.findByIdAndUpdate(
+        tenantId,
+        {
+          deletedAt: new Date(),
+          isActive: false,
+          updatedAt: new Date()
+        }
+      );
+    } catch (error) {
+      console.error('Error soft deleting tenant:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Restore a soft-deleted tenant
+   */
+  async restoreTenant(tenantId: string): Promise<void> {
+    try {
+      await Tenant.findByIdAndUpdate(
+        tenantId,
+        {
+          deletedAt: undefined,
+          isActive: true,
+          updatedAt: new Date()
+        }
+      );
+    } catch (error) {
+      console.error('Error restoring tenant:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update tenant feature flags
+   */
+  async updateTenantFeatures(tenantId: string, features: any): Promise<ITenant | undefined> {
+    try {
+      return await Tenant.findByIdAndUpdate(
+        tenantId,
+        { features, updatedAt: new Date() },
+        { new: true }
+      );
+    } catch (error) {
+      console.error('Error updating tenant features:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get tenant features
+   */
+  async getFeatures(tenantId: string): Promise<any> {
+    try {
+      const tenant = await Tenant.findById(tenantId).select('features');
+      return tenant?.features || {
+        apiAccess: false,
+        customReports: false,
+        advancedAnalytics: false,
+        whiteLabel: false,
+        multiUserAdmin: false,
+        sso: false,
+        webhooks: false
+      };
+    } catch (error) {
+      console.error('Error getting features:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Configure webhook for tenant
+   */
+  async configureWebhook(tenantId: string, webhookUrl: string, events: string[]): Promise<void> {
+    try {
+      await Tenant.findByIdAndUpdate(
+        tenantId,
+        {
+          webhookUrl,
+          webhookEvents: events,
+          updatedAt: new Date()
+        }
+      );
+    } catch (error) {
+      console.error('Error configuring webhook:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get webhook configuration
+   */
+  async getWebhookConfig(tenantId: string): Promise<{ url?: string; events?: string[] } | undefined> {
+    try {
+      const tenant = await Tenant.findById(tenantId).select('webhookUrl webhookEvents');
+      return tenant ? {
+        url: tenant.webhookUrl,
+        events: tenant.webhookEvents
+      } : undefined;
+    } catch (error) {
+      console.error('Error getting webhook config:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Upgrade subscription plan
+   */
+  async upgradeSubscriptionPlan(tenantId: string, newPlan: string): Promise<ITenant | undefined> {
+    try {
+      return await Tenant.findByIdAndUpdate(
+        tenantId,
+        {
+          subscriptionPlan: newPlan,
+          updatedAt: new Date()
+        },
+        { new: true }
+      );
+    } catch (error) {
+      console.error('Error upgrading subscription plan:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get billing information for a tenant
+   */
+  async getBillingInfo(tenantId: string): Promise<any> {
+    try {
+      const tenant = await Tenant.findById(tenantId).select(
+        'subscriptionPlan billingCycle billingEmail billingAddress invoicePrefix lastBilledAt'
+      );
+      return tenant ? {
+        plan: tenant.subscriptionPlan,
+        billingCycle: tenant.billingCycle,
+        email: tenant.billingEmail,
+        address: tenant.billingAddress,
+        invoicePrefix: tenant.invoicePrefix,
+        lastBilledAt: tenant.lastBilledAt
+      } : undefined;
+    } catch (error) {
+      console.error('Error getting billing info:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Record a billing event (e.g., payment, invoice issued)
+   */
+  async recordBillingEvent(tenantId: string, event: string, details: any): Promise<void> {
+    try {
+      // You could store this in a separate BillingEvent collection
+      // For now, we just update the lastBilledAt timestamp
+      if (event === 'billed' || event === 'payment_received') {
+        await Tenant.findByIdAndUpdate(
+          tenantId,
+          {
+            lastBilledAt: new Date(),
+            updatedAt: new Date()
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error recording billing event:', error);
       throw error;
     }
   }
