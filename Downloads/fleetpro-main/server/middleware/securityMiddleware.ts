@@ -2,6 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import { logger } from '../utils/logger.js';
 
+// Validate CORS configuration for production
+const validateCorsConfig = () => {
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.FRONTEND_URL) {
+      throw new Error('FRONTEND_URL environment variable is required in production');
+    }
+    if (!process.env.BACKEND_URL) {
+      throw new Error('BACKEND_URL environment variable is required in production');
+    }
+  }
+};
+
 // CORS whitelist for different environments
 const corsWhitelist = {
   development: [
@@ -15,14 +27,17 @@ const corsWhitelist = {
     'http://127.0.0.1:5050'
   ],
   production: [
-    process.env.FRONTEND_URL || 'https://fleetpro.example.com',
-    process.env.BACKEND_URL || 'https://api.fleetpro.example.com'
+    process.env.FRONTEND_URL!,
+    process.env.BACKEND_URL!
   ],
   staging: [
     'https://staging.fleetpro.example.com',
     'https://staging-api.fleetpro.example.com'
   ]
 };
+
+// Validate CORS before using
+validateCorsConfig();
 
 const allowedOrigins = corsWhitelist[process.env.NODE_ENV as keyof typeof corsWhitelist] || corsWhitelist.development;
 
