@@ -71,13 +71,7 @@ export default function RevenueReport() {
   };
 
   const dateRange = getDateRange();
-  
-  // Debug logging for date range
-    timePeriod,
-    dateRange,
-    queryEnabled: timePeriod === "all" || !!(dateRange.startDate && dateRange.endDate)
-  });
-  
+
   const { data: reportData, isLoading, refetch } = useQuery<RevenueReportData>({
     queryKey: ["/api/reports/revenue", timePeriod, dateRange.startDate, dateRange.endDate],
     queryFn: ({ queryKey }) => {
