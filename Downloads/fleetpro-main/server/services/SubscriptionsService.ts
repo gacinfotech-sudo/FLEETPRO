@@ -44,7 +44,6 @@ export class SubscriptionsService {
       });
 
       const saved = await subscription.save();
-      console.log(`Subscription created for tenant ${data.tenantId} on plan ${data.planId}`);
       return saved;
     } catch (error) {
       console.error('Error creating subscription:', error);
@@ -146,7 +145,6 @@ export class SubscriptionsService {
       subscription.updatedAt = new Date();
 
       const updated = await subscription.save();
-      console.log(`Subscription changed from ${oldPlanId} to ${newPlanId} for tenant ${tenantId}`);
 
       return {
         success: true,
@@ -175,7 +173,6 @@ export class SubscriptionsService {
 
       if (!subscription) throw new Error('Subscription not found');
 
-      console.log(`Subscription suspended for tenant ${tenantId}. Reason: ${reason || 'Not specified'}`);
       return subscription;
     } catch (error) {
       console.error('Error suspending subscription:', error);
@@ -196,7 +193,6 @@ export class SubscriptionsService {
 
       if (!subscription) throw new Error('Subscription not found');
 
-      console.log(`Tenant locked: ${tenantId}. Reason: ${reason || 'Not specified'}`);
       return subscription;
     } catch (error) {
       console.error('Error locking tenant:', error);
@@ -217,7 +213,6 @@ export class SubscriptionsService {
 
       if (!subscription) throw new Error('Subscription not found');
 
-      console.log(`Tenant unlocked: ${tenantId}`);
       return subscription;
     } catch (error) {
       console.error('Error unlocking tenant:', error);
@@ -246,7 +241,6 @@ export class SubscriptionsService {
 
       if (!subscription) throw new Error('Subscription not found');
 
-      console.log(`Subscription cancelled for tenant ${tenantId}. Reason: ${reason || 'Not specified'}`);
       return subscription;
     } catch (error) {
       console.error('Error cancelling subscription:', error);
@@ -272,7 +266,6 @@ export class SubscriptionsService {
 
       if (!subscription) throw new Error('Subscription not found');
 
-      console.log(`Subscription reactivated for tenant ${tenantId}`);
       return subscription;
     } catch (error) {
       console.error('Error reactivating subscription:', error);
@@ -321,7 +314,6 @@ export class SubscriptionsService {
 
       if (!subscription) throw new Error('Subscription not found');
 
-      console.log(`Trial converted to paid subscription for tenant ${tenantId}`);
       return subscription;
     } catch (error) {
       console.error('Error converting trial to paid:', error);

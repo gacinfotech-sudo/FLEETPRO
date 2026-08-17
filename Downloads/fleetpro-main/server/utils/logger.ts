@@ -79,7 +79,6 @@ class Logger {
 
     // Console output
     const color = this.getColorCode(level);
-    console.log(`${color}${formatted}\x1b[0m`);
 
     // File output
     const targetFile = level === LogLevel.ERROR || level === LogLevel.CRITICAL

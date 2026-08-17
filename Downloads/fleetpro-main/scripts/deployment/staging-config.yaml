@@ -1,0 +1,67 @@
+# FleetPro Staging Environment Configuration
+# Generated: 2026-08-16
+
+deployment:
+  environment: staging
+  version: latest
+  replicas: 3
+  orchestrator: ecs
+
+image:
+  repository: fleetpro
+  tag: latest
+  registry: ECR
+  pullPolicy: Always
+  platform: linux/amd64
+
+service:
+  type: LoadBalancer
+  port: 5050
+  targetPort: 5050
+  protocol: TCP
+  healthCheckPath: /health
+  healthCheckInterval: 30s
+  healthCheckTimeout: 5s
+  healthCheckRetries: 3
+
+resources:
+  cpu:
+    request: 256m
+    limit: 512m
+  memory:
+    request: 512Mi
+    limit: 1Gi
+
+environment:
+  NODE_ENV: staging
+  LOG_LEVEL: debug
+  API_TIMEOUT: 30s
+  RATE_LIMIT: 1000/minute
+
+database:
+  type: MongoDB
+  host: mongodb.staging.internal
+  port: 27017
+  database: fleetpro_staging
+  ssl: true
+  replicas: 3
+
+cache:
+  type: Redis
+  host: redis.staging.internal
+  port: 6379
+  database: 0
+  ttl: 3600
+
+monitoring:
+  enabled: true
+  metrics: Prometheus
+  logs: CloudWatch
+  traces: DataDog
+
+security:
+  tls: enabled
+  cors: enabled
+  csrf: enabled
+  rateLimit: enabled
+  authentication: JWT

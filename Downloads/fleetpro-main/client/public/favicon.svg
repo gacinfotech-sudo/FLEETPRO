@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="32" height="32" rx="6" fill="#2563eb"/>
+  
+  <!-- FleetPro Icon - Stylized FP with vehicle -->
+  <g transform="translate(4, 4)">
+    <!-- Letter F -->
+    <rect x="2" y="2" width="2" height="16" fill="white"/>
+    <rect x="2" y="2" width="8" height="2" fill="white"/>
+    <rect x="2" y="9" width="6" height="2" fill="white"/>
+    
+    <!-- Letter P -->
+    <rect x="12" y="2" width="2" height="16" fill="white"/>
+    <rect x="12" y="2" width="8" height="2" fill="white"/>
+    <rect x="12" y="9" width="8" height="2" fill="white"/>
+    <rect x="20" y="2" width="2" height="9" fill="white"/>
+    
+    <!-- Vehicle underline -->
+    <rect x="2" y="20" width="20" height="2" rx="1" fill="white"/>
+    <circle cx="6" cy="23" r="1" fill="white"/>
+    <circle cx="18" cy="23" r="1" fill="white"/>
+  </g>
+</svg>

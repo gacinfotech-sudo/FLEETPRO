@@ -17,13 +17,11 @@ export class RenewalScheduler {
    */
   initialize(): void {
     if (this.isRunning) {
-      console.log('Renewal scheduler already running');
       return;
     }
 
     // Run every day at 00:00 UTC
     cron.schedule('0 0 * * *', async () => {
-      console.log('Starting renewal scheduler...');
       await this.processRenewals();
     });
 
@@ -33,7 +31,6 @@ export class RenewalScheduler {
     });
 
     this.isRunning = true;
-    console.log('Renewal scheduler initialized');
   }
 
   /**
@@ -69,14 +66,12 @@ export class RenewalScheduler {
           await this.subscriptionsService.updateRenewalDate(sub.tenantId, newRenewalDate);
 
           processed++;
-          console.log(`Renewed subscription for tenant ${sub.tenantId}`);
         } catch (error) {
           errors++;
           console.error(`Error renewing subscription for tenant ${sub.tenantId}:`, error);
         }
       }
 
-      console.log(`Renewal processing complete: ${processed} processed, ${errors} errors`);
       return { processed, errors };
     } catch (error) {
       console.error('Error in renewal processing:', error);
@@ -103,7 +98,6 @@ export class RenewalScheduler {
             invoice.tenantId,
             'Payment overdue for more than 7 days'
           );
-          console.log(`Suspended subscription for tenant ${invoice.tenantId} - payment overdue`);
         }
       }
     } catch (error) {

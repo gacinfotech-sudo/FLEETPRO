@@ -12,7 +12,6 @@ const connectDB = async (): Promise<void> => {
       throw new Error('MONGODB_URI is not defined in environment variables');
     }
 
-    console.log('🔗 Connecting to MongoDB Atlas...');
     
     const conn = await mongoose.connect(mongoURI, {
       maxPoolSize: 10,
@@ -21,8 +20,6 @@ const connectDB = async (): Promise<void> => {
       bufferCommands: false
     });
     
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    console.log(`📊 Database: ${conn.connection.name}`);
     
     // Handle connection events
     mongoose.connection.on('error', (error) => {
@@ -30,12 +27,10 @@ const connectDB = async (): Promise<void> => {
     });
     
     mongoose.connection.on('disconnected', () => {
-      console.log('⚠️ MongoDB disconnected');
     });
     
     process.on('SIGINT', async () => {
       await mongoose.connection.close();
-      console.log('🔌 MongoDB connection closed due to app termination');
       process.exit(0);
     });
     

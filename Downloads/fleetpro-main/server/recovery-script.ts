@@ -27,8 +27,6 @@ function askQuestion(question: string): Promise<string> {
 
 async function main() {
   try {
-    console.log("🔐 EMERGENCY ADMIN RECOVERY TOOL");
-    console.log("================================");
     
     // Connect to database
     await connectDB();
@@ -41,14 +39,12 @@ async function main() {
       const newPassword = await askQuestion("Enter new admin password (min 8 chars): ");
       
       if (newPassword.length < 8) {
-        console.log("❌ Password must be at least 8 characters long");
         process.exit(1);
       }
       
       const confirm = await askQuestion(`⚠️  This will reset the admin password. Type 'CONFIRM' to proceed: `);
       
       if (confirm !== "CONFIRM") {
-        console.log("❌ Operation cancelled");
         process.exit(0);
       }
       
@@ -59,7 +55,6 @@ async function main() {
       const password = await askQuestion("Enter password (min 8 chars): ");
       
       if (password.length < 8) {
-        console.log("❌ Password must be at least 8 characters long");
         process.exit(1);
       }
       
@@ -70,14 +65,9 @@ async function main() {
       const result = await createEmergencyAdmin();
       
       if (!result) {
-        console.log("💡 To use emergency admin:");
-        console.log("1. Set environment variables: EMERGENCY_ADMIN_ID and EMERGENCY_ADMIN_PASSWORD");
-        console.log("2. Restart the application");
-        console.log("3. Login with the emergency credentials");
       }
       
     } else {
-      console.log("❌ Invalid choice");
       process.exit(1);
     }
     

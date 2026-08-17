@@ -49,7 +49,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   }, []); // Only run once on mount
 
   const handleSessionExpiry = () => {
-    console.log("Session expired - redirecting to login");
     setUser(null);
     toast({
       variant: "destructive",
@@ -89,7 +88,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         // Only trigger session expiry if user was previously authenticated
         // This prevents the immediate logout issue after login
         if (user) {
-          console.log("Session expired for authenticated user");
           handleSessionExpiry();
         } else {
           // No user session, just clear the user state silently
@@ -110,7 +108,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
             // Only restore if stored less than a week ago
             if (parsedUser.lastValidated && parsedUser.lastValidated > oneWeekAgo) {
               setUser(parsedUser);
-              console.log("Restored user from localStorage for offline use");
             } else {
               localStorage.removeItem('fleetpro_user');
             }
@@ -166,13 +163,10 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       const hasTenanId = data.user.tenantId && typeof data.user.tenantId === 'object';
       const isRootAdmin = data.user.role === "admin" && !hasTenanId;
 
-      console.log('Auth Decision:', { userId: data.user.userId, role: data.user.role, hasTenanId, isRootAdmin });
 
       if (isRootAdmin) {
-        console.log('Redirecting to ADMIN dashboard');
         setLocation("/admin");
       } else {
-        console.log('Redirecting to TENANT dashboard');
         setLocation("/dashboard");
       }
     } catch (error) {

@@ -40,9 +40,6 @@ export class PaymentsService {
       // Update invoice
       await this.invoicingService.markInvoicePaid(data.invoiceId, data.amount);
 
-      console.log(
-        `Payment recorded: ${data.transactionReference} for invoice ${data.invoiceId}. Amount: ${data.amount}`
-      );
 
       return saved;
     } catch (error) {

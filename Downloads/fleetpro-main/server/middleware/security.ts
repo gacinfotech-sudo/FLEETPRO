@@ -185,13 +185,11 @@ export const ipBlockingMiddleware = (req: Request, res: Response, next: NextFunc
   for (const pattern of suspiciousPatterns) {
     if (pattern.test(requestData)) {
       suspiciousIPs.add(clientIP);
-      console.log(`Suspicious activity detected from IP: ${clientIP}`);
       
       // Block IP after 3 suspicious attempts
       const attempts = Array.from(suspiciousIPs).filter(ip => ip === clientIP).length;
       if (attempts >= 3) {
         blockedIPs.add(clientIP);
-        console.log(`IP blocked due to repeated suspicious activity: ${clientIP}`);
       }
       
       return res.status(400).json({ 
@@ -224,7 +222,6 @@ export const sessionSecurityMiddleware = (req: any, res: Response, next: NextFun
       if (storedFingerprint.userAgent !== currentUA || 
           storedFingerprint.ip !== currentIP) {
         
-        console.log(`Potential session hijacking detected for user: ${req.session.userId}`);
         req.session.destroy(() => {
           res.status(401).json({ 
             message: 'Session security violation detected. Please log in again.' 

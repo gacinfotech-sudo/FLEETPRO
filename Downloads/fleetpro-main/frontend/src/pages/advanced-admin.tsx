@@ -35,7 +35,6 @@ export default function AdvancedAdmin() {
         });
         if (!res.ok) throw new Error('Failed to fetch tenants');
         const data = await res.json();
-        console.log('Tenants fetched:', data);
         return data.tenants || data || [];
       } catch (error) {
         console.error('Error fetching tenants:', error);
@@ -48,7 +47,6 @@ export default function AdvancedAdmin() {
   // Auto-select first tenant
   useEffect(() => {
     if (tenants && tenants.length > 0 && !selectedTenant) {
-      console.log('Auto-selecting first tenant:', tenants[0]);
       setSelectedTenant(tenants[0]);
     }
   }, [tenants]);

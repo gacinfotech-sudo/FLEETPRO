@@ -41,12 +41,6 @@ export const authenticateUser = async (req: AuthRequest, res: Response, next: Ne
     }
     
     // Debug logging
-    console.log("User authenticated:", {
-      userId: user.userId,
-      role: user.role,
-      tenantId: typeof user.tenantId === 'object' ? user.tenantId._id : user.tenantId,
-      tenantIdString: req.tenantId
-    });
     
     next();
   } catch (error) {
@@ -62,7 +56,6 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
   
   // Optional: Add IP-based security check
   const clientIP = req.ip || req.connection.remoteAddress;
-  console.log(`Admin access from IP: ${clientIP} by user: ${req.user.userId}`);
   
   // Optional: Check for admin session timeout (stricter than regular users)
   const lastActivity = (req.session as any)?.lastActivity;
@@ -70,7 +63,6 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
   
   if (lastActivity && Date.now() - lastActivity > adminSessionTimeout) {
     req.session.destroy((err) => {
-      console.log('Admin session expired due to inactivity');
     });
     return res.status(401).json({ message: "Admin session expired" });
   }
@@ -87,7 +79,6 @@ export const requireTenant = (req: AuthRequest, res: Response, next: NextFunctio
   
   // Client users must have a tenantId
   if (!req.tenantId && req.user?.role === "client") {
-    console.log("Tenant access denied for user:", req.user?.userId, "tenantId:", req.tenantId);
     return res.status(403).json({ message: "Tenant access required" });
   }
   

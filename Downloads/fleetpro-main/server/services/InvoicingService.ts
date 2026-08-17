@@ -70,7 +70,6 @@ export class InvoicingService {
       });
 
       const saved = await invoice.save();
-      console.log(`Invoice generated: ${saved.invoiceNumber} for tenant ${data.tenantId}`);
       return saved;
     } catch (error) {
       console.error('Error generating invoice:', error);
@@ -174,7 +173,6 @@ export class InvoicingService {
       invoice.updatedAt = new Date();
       const updated = await invoice.save();
 
-      console.log(`Invoice ${invoiceId} marked paid: ${paidAmount}. Outstanding: ${invoice.outstanding}`);
       return updated;
     } catch (error) {
       console.error('Error marking invoice paid:', error);
@@ -198,7 +196,6 @@ export class InvoicingService {
 
       if (!invoice) throw new Error('Invoice not found');
 
-      console.log(`Invoice ${invoiceId} cancelled. Reason: ${reason || 'Not specified'}`);
       return invoice;
     } catch (error) {
       console.error('Error cancelling invoice:', error);
@@ -235,7 +232,6 @@ export class InvoicingService {
         invoices.push(invoice);
       }
 
-      console.log(`Generated ${invoices.length} invoices for renewal`);
       return invoices;
     } catch (error) {
       console.error('Error generating monthly invoices:', error);

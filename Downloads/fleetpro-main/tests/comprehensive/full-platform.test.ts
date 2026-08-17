@@ -525,39 +525,24 @@ runner.describe('Performance Baseline Tests', async () => {
 // ==================== TEST EXECUTION ====================
 
 export async function runTests(): Promise<any> {
-  console.log('Starting comprehensive test suite...\n');
 
   const startTime = Date.now();
   const suites = runner.getSuites();
 
   for (const suite of suites) {
-    console.log(`\n${suite.name}`);
-    console.log('='.repeat(50));
 
     for (const test of suite.tests) {
       const icon = test.passed ? '✓' : '✗';
       const status = test.passed ? 'PASSED' : 'FAILED';
-      console.log(`${icon} ${test.name} (${test.duration}ms) - ${status}`);
       if (test.error) {
-        console.log(`  Error: ${test.error}`);
       }
     }
 
-    console.log(`\nResults: ${suite.passed} passed, ${suite.failed} failed`);
   }
 
   const report = runner.getReport();
   const duration = Date.now() - startTime;
 
-  console.log('\n' + '='.repeat(50));
-  console.log('FINAL REPORT');
-  console.log('='.repeat(50));
-  console.log(`Total Suites: ${report.totalSuites}`);
-  console.log(`Total Tests: ${report.totalTests}`);
-  console.log(`Passed: ${report.passed}`);
-  console.log(`Failed: ${report.failed}`);
-  console.log(`Total Duration: ${duration}ms`);
-  console.log(`Success Rate: ${((report.passed / report.totalTests) * 100).toFixed(2)}%`);
 
   return {
     suites,

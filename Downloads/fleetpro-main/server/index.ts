@@ -89,7 +89,6 @@ app.use((req, res, next) => {
   await connectDB();
   
   // Skip default admin user creation - secure admin already exists
-  console.log('✅ Using existing secure admin credentials');
 
   // Check for emergency admin creation from environment variables
   try {

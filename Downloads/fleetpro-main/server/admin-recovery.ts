@@ -8,7 +8,6 @@ import bcrypt from "bcrypt";
  */
 export async function emergencyAdminPasswordReset(newPassword: string) {
   try {
-    console.log("🚨 EMERGENCY ADMIN PASSWORD RESET INITIATED");
     
     if (!newPassword || newPassword.length < 8) {
       throw new Error("New password must be at least 8 characters long");
@@ -34,9 +33,6 @@ export async function emergencyAdminPasswordReset(newPassword: string) {
     // Clear admin session to force logout
     await storage.updateUserSession(adminUser.id, null);
     
-    console.log("✅ Admin password reset successfully");
-    console.log(`Admin User ID: ${adminUser.userId}`);
-    console.log("⚠️  Please login immediately and change the password");
     
     return {
       success: true,
@@ -59,7 +55,6 @@ export async function createBackupAdmin(userId: string, password: string) {
     const existingAdmin = users.find(user => user.role === 'admin');
     
     if (existingAdmin) {
-      console.log("⚠️  Admin user already exists. Use emergencyAdminPasswordReset instead.");
       return false;
     }
     
@@ -72,7 +67,6 @@ export async function createBackupAdmin(userId: string, password: string) {
     };
     
     await storage.createUser(adminData);
-    console.log("✅ Backup admin user created successfully");
     return true;
     
   } catch (error) {
@@ -91,18 +85,15 @@ export async function createEmergencyAdmin() {
     const emergencyPassword = process.env.EMERGENCY_ADMIN_PASSWORD;
     
     if (!emergencyId || !emergencyPassword) {
-      console.log("⚠️  No emergency admin credentials found in environment variables");
       return false;
     }
     
-    console.log("🚨 Creating emergency admin user from environment variables");
     
     // Check if emergency admin already exists
     const users = await storage.getUsers();
     const existingEmergencyAdmin = users.find(user => user.userId === emergencyId);
     
     if (existingEmergencyAdmin) {
-      console.log("⚠️  Emergency admin user already exists");
       return true;
     }
     
@@ -115,9 +106,6 @@ export async function createEmergencyAdmin() {
     };
     
     await storage.createUser(adminData);
-    console.log(`✅ Emergency admin created: ${emergencyId}`);
-    console.log("⚠️  Please login immediately and change the password");
-    console.log("⚠️  Remove EMERGENCY_ADMIN_* environment variables after recovery");
     
     return true;
     
@@ -139,7 +127,6 @@ export async function logAdminRecoveryAction(action: string, details: any) {
     type: 'ADMIN_RECOVERY'
   };
   
-  console.log("🔐 ADMIN RECOVERY LOG:", JSON.stringify(logEntry, null, 2));
   
   // In a production environment, you might want to:
   // - Save to a separate security log file

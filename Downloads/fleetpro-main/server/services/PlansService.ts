@@ -109,7 +109,6 @@ export class PlansService {
       });
 
       const saved = await plan.save();
-      console.log(`Plan created: ${saved._id} (${data.code})`);
       return saved;
     } catch (error) {
       console.error('Error creating plan:', error);
@@ -139,7 +138,6 @@ export class PlansService {
       );
 
       if (plan) {
-        console.log(`Plan updated: ${planId}`);
       }
 
       return plan || null;
@@ -161,7 +159,6 @@ export class PlansService {
       );
 
       if (plan) {
-        console.log(`Plan deactivated: ${planId}`);
       }
 
       return plan || null;
@@ -183,7 +180,6 @@ export class PlansService {
       );
 
       if (plan) {
-        console.log(`Plan reactivated: ${planId}`);
       }
 
       return plan || null;
@@ -205,7 +201,6 @@ export class PlansService {
       );
 
       if (plan) {
-        console.log(`Plan archived: ${planId}`);
       }
 
       return plan || null;

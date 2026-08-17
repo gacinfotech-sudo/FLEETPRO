@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /features
+Allow: /pricing
+Allow: /contact
+
+# Block admin and dashboard areas from indexing
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /api/
+Disallow: /reset-password
+
+# Sitemap location
+Sitemap: https://fleetpro.raydify.in/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1

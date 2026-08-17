@@ -52,11 +52,6 @@ export async function retryWithBackoff<T>(
       // Add jitter to prevent thundering herd
       const jitteredDelay = delay + Math.random() * (delay * 0.1);
 
-      console.log(
-        `[Retry ${attempt + 1}/${config.maxRetries}] ` +
-        `Retrying after ${Math.round(jitteredDelay)}ms. ` +
-        `Error: ${lastError.message}`
-      );
 
       config.onRetry(attempt + 1, jitteredDelay, lastError);
 
@@ -111,11 +106,6 @@ export async function retryOnHttpError<T>(
 
       const jitteredDelay = delay + Math.random() * (delay * 0.1);
 
-      console.log(
-        `[HTTP Retry ${attempt + 1}/${config.maxRetries}] ` +
-        `Retrying after ${Math.round(jitteredDelay)}ms. ` +
-        `Status: ${status || 'unknown'}`
-      );
 
       config.onRetry(attempt + 1, jitteredDelay, lastError);
       await new Promise(resolve => setTimeout(resolve, jitteredDelay));
@@ -150,7 +140,6 @@ export class CircuitBreaker<T> {
       Date.now() - this.lastFailureTime > this.options.resetTimeout
     ) {
       this.state = 'HALF_OPEN';
-      console.log('[CircuitBreaker] Attempting recovery (HALF_OPEN)');
     }
 
     // If circuit is open, fail fast
@@ -168,7 +157,6 @@ export class CircuitBreaker<T> {
       if (this.state === 'HALF_OPEN') {
         this.state = 'CLOSED';
         this.failureCount = 0;
-        console.log('[CircuitBreaker] Circuit recovered (CLOSED)');
       }
 
       return result;
