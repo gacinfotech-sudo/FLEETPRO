@@ -242,6 +242,10 @@ export class MongoDBStorage implements IStorage {
 
   async getTenant(id: string): Promise<ITenant | undefined> {
     try {
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
       return await Tenant.findById(id) || undefined;
     } catch (error) {
       console.error('Error getting tenant:', error);
@@ -251,6 +255,10 @@ export class MongoDBStorage implements IStorage {
 
   async updateTenant(id: string, data: Partial<ITenant>): Promise<ITenant | undefined> {
     try {
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
       return await Tenant.findByIdAndUpdate(id, data, { new: true }) || undefined;
     } catch (error) {
       console.error('Error updating tenant:', error);
@@ -260,6 +268,10 @@ export class MongoDBStorage implements IStorage {
 
   async deleteTenant(id: string): Promise<void> {
     try {
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid tenant ID format');
+      }
       await Tenant.findByIdAndDelete(id);
     } catch (error) {
       console.error('Error deleting tenant:', error);
@@ -282,16 +294,13 @@ export class MongoDBStorage implements IStorage {
 
       // Convert tenantId string to ObjectId if provided
       if (userData.tenantId && typeof userData.tenantId === 'string') {
-        console.log('Converting tenantId from string to ObjectId:', userData.tenantId);
         userData.tenantId = new mongoose.Types.ObjectId(userData.tenantId);
       }
 
-      console.log('Creating user with data:', { ...userData, password: '[HIDDEN]' });
 
       const user = new User(userData);
       const savedUser = await user.save();
 
-      console.log('User created successfully:', { 
         id: savedUser._id, 
         userId: savedUser.userId, 
         tenantId: savedUser.tenantId 
@@ -330,6 +339,10 @@ export class MongoDBStorage implements IStorage {
 
   async getUsersByTenant(tenantId: string): Promise<IUser[]> {
     try {
+      // Validate tenant ID format
+      if (!mongoose.Types.ObjectId.isValid(tenantId)) {
+        return [];
+      }
       return await User.find({ tenantId }).populate('tenantId');
     } catch (error) {
       console.error('Error getting users by tenant:', error);
@@ -339,6 +352,11 @@ export class MongoDBStorage implements IStorage {
 
   async updateUser(id: string, data: Partial<IUser>): Promise<IUser | undefined> {
     try {
+      // Validate user ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
+
       // Store user ID in lowercase for consistency
       if (data.userId) {
         data.userId = data.userId.toLowerCase();
@@ -350,6 +368,9 @@ export class MongoDBStorage implements IStorage {
 
       // Convert tenantId string to ObjectId if provided
       if (data.tenantId && typeof data.tenantId === 'string') {
+        if (!mongoose.Types.ObjectId.isValid(data.tenantId)) {
+          return undefined;
+        }
         data.tenantId = new mongoose.Types.ObjectId(data.tenantId);
       }
 
@@ -362,6 +383,10 @@ export class MongoDBStorage implements IStorage {
 
   async deleteUser(id: string): Promise<void> {
     try {
+      // Validate user ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid user ID format');
+      }
       await User.findByIdAndDelete(id);
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -396,6 +421,9 @@ export class MongoDBStorage implements IStorage {
 
   async getVehicle(id: string): Promise<IVehicle | undefined> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
       return await Vehicle.findById(id) || undefined;
     } catch (error) {
       console.error('Error getting vehicle:', error);
@@ -405,8 +433,14 @@ export class MongoDBStorage implements IStorage {
 
   async updateVehicle(id: string, data: any): Promise<IVehicle | undefined> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
       // Convert tenantId string to ObjectId if provided
       if (data.tenantId && typeof data.tenantId === 'string') {
+        if (!mongoose.Types.ObjectId.isValid(data.tenantId)) {
+          return undefined;
+        }
         data.tenantId = new mongoose.Types.ObjectId(data.tenantId);
       }
 
@@ -419,6 +453,9 @@ export class MongoDBStorage implements IStorage {
 
   async deleteVehicle(id: string): Promise<void> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid vehicle ID format');
+      }
       await Vehicle.findByIdAndDelete(id);
     } catch (error) {
       console.error('Error deleting vehicle:', error);
@@ -481,6 +518,9 @@ export class MongoDBStorage implements IStorage {
 
   async getDriver(id: string): Promise<IDriver | undefined> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
       return await Driver.findById(id) || undefined;
     } catch (error) {
       console.error('Error getting driver:', error);
@@ -490,8 +530,14 @@ export class MongoDBStorage implements IStorage {
 
   async updateDriver(id: string, data: any): Promise<IDriver | undefined> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
       // Convert tenantId string to ObjectId if provided
       if (data.tenantId && typeof data.tenantId === 'string') {
+        if (!mongoose.Types.ObjectId.isValid(data.tenantId)) {
+          return undefined;
+        }
         data.tenantId = new mongoose.Types.ObjectId(data.tenantId);
       }
 
@@ -504,6 +550,9 @@ export class MongoDBStorage implements IStorage {
 
   async deleteDriver(id: string): Promise<void> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid driver ID format');
+      }
       await Driver.findByIdAndDelete(id);
     } catch (error) {
       console.error('Error deleting driver:', error);
@@ -597,6 +646,9 @@ export class MongoDBStorage implements IStorage {
 
   async getBooking(id: string): Promise<IBooking | undefined> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
       return await Booking.findById(id)
         .populate('vehicleId')
         .populate('driverId')
@@ -609,14 +661,26 @@ export class MongoDBStorage implements IStorage {
 
   async updateBooking(id: string, data: any): Promise<IBooking | undefined> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return undefined;
+      }
       // Convert string IDs to ObjectIds if provided
       if (data.tenantId && typeof data.tenantId === 'string') {
+        if (!mongoose.Types.ObjectId.isValid(data.tenantId)) {
+          return undefined;
+        }
         data.tenantId = new mongoose.Types.ObjectId(data.tenantId);
       }
       if (data.vehicleId && typeof data.vehicleId === 'string') {
+        if (!mongoose.Types.ObjectId.isValid(data.vehicleId)) {
+          return undefined;
+        }
         data.vehicleId = new mongoose.Types.ObjectId(data.vehicleId);
       }
       if (data.driverId && typeof data.driverId === 'string') {
+        if (!mongoose.Types.ObjectId.isValid(data.driverId)) {
+          return undefined;
+        }
         data.driverId = new mongoose.Types.ObjectId(data.driverId);
       }
 
@@ -631,6 +695,9 @@ export class MongoDBStorage implements IStorage {
 
   async deleteBooking(id: string): Promise<void> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid booking ID format');
+      }
       await Booking.findByIdAndDelete(id);
     } catch (error) {
       console.error('Error deleting booking:', error);
@@ -920,7 +987,6 @@ export class MongoDBStorage implements IStorage {
       if (fleetSize > 0) {
         // Get unique vehicles that have bookings
         const vehiclesWithBookings = await Booking.distinct('vehicleId', matchConditions);
-        console.log('Fleet Utilization Debug:', {
           fleetSize,
           uniqueVehiclesWithBookings: vehiclesWithBookings.length,
           vehicleIds: vehiclesWithBookings
@@ -928,7 +994,6 @@ export class MongoDBStorage implements IStorage {
         fleetUtilization = (vehiclesWithBookings.length / fleetSize) * 100;
         // Ensure it doesn't exceed 100%
         fleetUtilization = Math.min(fleetUtilization, 100);
-        console.log('Calculated fleet utilization:', fleetUtilization);
       }
 
       return {
@@ -982,12 +1047,10 @@ export class MongoDBStorage implements IStorage {
         userData.tenantId = new mongoose.Types.ObjectId(userData.tenantId);
       }
 
-      console.log('Creating sub-user with data:', { ...userData, password: '[HIDDEN]' });
 
       const user = new User(userData);
       const savedUser = await user.save();
 
-      console.log('Sub-user created successfully:', { 
         id: savedUser._id, 
         userId: savedUser.userId, 
         role: savedUser.role,
@@ -1023,7 +1086,6 @@ export class MongoDBStorage implements IStorage {
           sessionId: null // Clear session to force logout
         }
       );
-      console.log(`Sub-user ${userId} deactivated by ${deactivatedBy}`);
     } catch (error) {
       console.error('Error deactivating sub-user:', error);
       throw error;
@@ -1038,7 +1100,6 @@ export class MongoDBStorage implements IStorage {
           isActive: true
         }
       );
-      console.log(`Sub-user ${userId} reactivated by ${reactivatedBy}`);
     } catch (error) {
       console.error('Error reactivating sub-user:', error);
       throw error;
@@ -1078,7 +1139,6 @@ export class MongoDBStorage implements IStorage {
           }
         }
       );
-      console.log(`Fixed ${result.modifiedCount} bookings without audit trail`);
       return result.modifiedCount;
     } catch (error) {
       console.error('Error fixing booking audit trail:', error);
@@ -1114,7 +1174,6 @@ export class MongoDBStorage implements IStorage {
         { isActive: false }
       );
 
-      console.log(`Deactivated tenant ${tenantId} and all associated users`);
     } catch (error) {
       console.error('Error deactivating client and managers:', error);
       throw error;
@@ -1134,7 +1193,6 @@ export class MongoDBStorage implements IStorage {
         { isActive: true }
       );
 
-      console.log(`Activated tenant ${tenantId} and all associated users`);
     } catch (error) {
       console.error('Error activating client and managers:', error);
       throw error;
@@ -1142,7 +1200,6 @@ export class MongoDBStorage implements IStorage {
   }
 
   async markOnboardingComplete(userId: string): Promise<void> {
-    console.log('Marking onboarding complete for userId:', userId);
 
     const user = await User.findOne({ userId });
     if (!user) {
@@ -1150,10 +1207,8 @@ export class MongoDBStorage implements IStorage {
       throw new Error("User not found");
     }
 
-    console.log('Current onboarding status:', user.hasCompletedOnboarding);
     user.hasCompletedOnboarding = true;
     await user.save();
-    console.log('Onboarding marked complete for user:', userId);
   }
 
   // Subscription Plan Management Methods
