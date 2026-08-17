@@ -136,6 +136,7 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       return;
     }
 
+    console.log({
       name: file.name,
       size: file.size,
       type: file.type
@@ -220,17 +221,13 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       return;
     }
 
-      fileName: logoFile.name,
-      fileSize: logoFile.size,
-      fileType: logoFile.type
-    });
-
     setIsUploadingLogo(true);
     try {
       const formData = new FormData();
       formData.append('logo', logoFile);
 
-      const response = await fetch('http://localhost:5050/api/auth/upload-logo', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/auth/upload-logo`, {
         method: 'POST',
         credentials: 'include',
         body: formData
