@@ -130,7 +130,8 @@ export default function EnhancedBookingForm({ onSuccess }: EnhancedBookingFormPr
   const { data: businessProfile } = useQuery({
     queryKey: ['/api/auth/business-profile-for-documents'],
     queryFn: async () => {
-      const response = await fetch('http://localhost:5050/api/auth/business-profile-for-documents', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/auth/business-profile-for-documents`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch business profile');
@@ -158,7 +159,8 @@ export default function EnhancedBookingForm({ onSuccess }: EnhancedBookingFormPr
         thirdPartyDriverCharges: 0,
       };
       
-      const response = await fetch('http://localhost:5050/api/bookings', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

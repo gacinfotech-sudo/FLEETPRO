@@ -79,7 +79,8 @@ export default function ManageExpenses() {
   // Create expense mutation
   const createExpenseMutation = useMutation({
     mutationFn: async (expenseData: any) => {
-      const response = await fetch('http://localhost:5050/api/expenses', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/expenses`, {
         method: 'POST',
         body: JSON.stringify(expenseData),
         headers: { 'Content-Type': 'application/json' }

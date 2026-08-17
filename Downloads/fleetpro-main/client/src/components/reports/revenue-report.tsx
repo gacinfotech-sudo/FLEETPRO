@@ -102,7 +102,8 @@ export default function RevenueReport() {
       // Fetch business profile for header information (includes inherited data for managers)
       let businessProfile = null;
       try {
-        const profileResponse = await fetch('http://localhost:5050/api/auth/business-profile-for-documents', {
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+        const profileResponse = await fetch(`${apiBase}/api/auth/business-profile-for-documents`, {
           credentials: 'include'
         });
         if (profileResponse.ok) {

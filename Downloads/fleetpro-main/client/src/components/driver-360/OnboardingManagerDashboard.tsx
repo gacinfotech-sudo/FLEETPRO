@@ -56,7 +56,8 @@ const OnboardingManagerDashboard: React.FC<OnboardingManagerDashboardProps> = ({
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:5050/api/driver-onboarding/stats');
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+        const response = await fetch(`${apiBase}/api/driver-onboarding/stats`);
         if (!response.ok) throw new Error('Failed to fetch stats');
         const data = await response.json();
         setStats(data);

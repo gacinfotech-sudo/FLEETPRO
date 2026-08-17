@@ -41,7 +41,8 @@ export function MarkAttendanceDialog({
         notes
       };
 
-      const response = await fetch('http://localhost:5050/api/driver-attendance/mark', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/driver-attendance/mark`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -110,7 +110,8 @@ export const LeaveRequestDialog: React.FC<Props> = ({
         throw new Error('Please fill all required fields');
       }
 
-      const response = await fetch('http://localhost:5050/api/driver-leaves/request', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/driver-leaves/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

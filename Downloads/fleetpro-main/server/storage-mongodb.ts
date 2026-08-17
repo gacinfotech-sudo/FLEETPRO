@@ -329,11 +329,6 @@ export class MongoDBStorage implements IStorage {
       const user = new User(userData);
       const savedUser = await user.save();
 
-        id: savedUser._id, 
-        userId: savedUser.userId, 
-        tenantId: savedUser.tenantId 
-      });
-
       return savedUser;
     } catch (error) {
       console.error('Error creating user:', error);
@@ -1015,10 +1010,6 @@ export class MongoDBStorage implements IStorage {
       if (fleetSize > 0) {
         // Get unique vehicles that have bookings
         const vehiclesWithBookings = await Booking.distinct('vehicleId', matchConditions);
-          fleetSize,
-          uniqueVehiclesWithBookings: vehiclesWithBookings.length,
-          vehicleIds: vehiclesWithBookings
-        });
         fleetUtilization = (vehiclesWithBookings.length / fleetSize) * 100;
         // Ensure it doesn't exceed 100%
         fleetUtilization = Math.min(fleetUtilization, 100);
@@ -1078,12 +1069,6 @@ export class MongoDBStorage implements IStorage {
 
       const user = new User(userData);
       const savedUser = await user.save();
-
-        id: savedUser._id, 
-        userId: savedUser.userId, 
-        role: savedUser.role,
-        createdBy: savedUser.createdBy 
-      });
 
       return savedUser;
     } catch (error) {

@@ -111,7 +111,8 @@ export default function AnalyticsBuilder() {
   // Run anomaly detection
   const runAnomalyDetection = async () => {
     try {
-      const response = await fetch('http://localhost:5050/api/analytics/anomalies', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/analytics/anomalies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

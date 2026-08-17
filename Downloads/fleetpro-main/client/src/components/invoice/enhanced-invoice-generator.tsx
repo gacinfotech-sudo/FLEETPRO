@@ -115,7 +115,8 @@ export default function EnhancedInvoiceGenerator({ booking, isOpen, onClose }: E
   const { data: businessProfile } = useQuery({
     queryKey: ['/api/auth/business-profile-for-documents'],
     queryFn: async () => {
-      const response = await fetch('http://localhost:5050/api/auth/business-profile-for-documents', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/auth/business-profile-for-documents`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch business profile');

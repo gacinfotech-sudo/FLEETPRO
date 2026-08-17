@@ -47,7 +47,8 @@ export const LeaveApprovalList: React.FC<Props> = ({ userRole }) => {
       try {
         setLoading(true);
         // Fetch statistics
-        const statsResponse = await fetch('http://localhost:5050/api/driver-leaves/stats');
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+        const statsResponse = await fetch(`${apiBase}/api/driver-leaves/stats`);
         if (statsResponse.ok) {
           const statsData = await statsResponse.json();
           setStats(statsData);

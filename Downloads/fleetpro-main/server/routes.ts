@@ -519,10 +519,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get existing user data to preserve logo and signature URLs
       const existingUser = await storage.getUser(req.user.id);
       const existingBusinessDetails = existingUser?.businessDetails as any || {};
-      
-        logoUrl: existingBusinessDetails?.logoUrl,
-        signatureUrl: existingBusinessDetails?.signatureUrl
-      });
 
       const businessDetails = {
         businessName,
@@ -563,12 +559,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ message: "No logo file provided" });
       }
-
-        filename: req.file.filename,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
-        path: req.file.path
-      });
 
       // Validate file size again on server side
       if (req.file.size > 76800) {
@@ -643,12 +633,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ message: "No signature file provided" });
       }
-
-        filename: req.file.filename,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
-        path: req.file.path
-      });
 
       // Validate file size again on server side
       if (req.file.size > 20480) {
@@ -1269,23 +1253,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/revenue", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { startDate, endDate } = req.query;
-        tenantId: req.tenantId,
-        startDate,
-        endDate,
-        queryParams: req.query
-      });
-      
+
       const report = await storage.getRevenueReport(
         req.tenantId!,
         startDate as string,
         endDate as string
       );
-      
-        totalRevenue: report.totalRevenue,
-        totalBookings: report.completedBookings,
-        dateRange: { startDate, endDate }
-      });
-      
+
       res.json(report);
     } catch (error) {
       console.error("Error fetching revenue report:", error);
