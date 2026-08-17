@@ -1,0 +1,244 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useLocation } from "wouter";
+import { apiRequest, setSessionExpiryHandler } from "../lib/api";
+import { setQuerySessionExpiryHandler } from "../lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+interface User {
+  id: number;
+  userId: string;
+  role: string;
+  tenantId?: number;
+  mustResetPassword?: boolean;
+  hasCompletedOnboarding?: boolean;
+  lastLogin?: Date;
+  lastLoginIP?: string;
+  lastLoginUserAgent?: string;
+  loginAttempts?: number;
+  failedLoginAttempts?: number;
+  accountLocked?: boolean;
+  lockoutTime?: Date;
+}
+
+interface AuthContextType {
+  user: User | null;
+  login: (userId: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  resetPassword: (newPassword: string, confirmPassword: string) => Promise<void>;
+  loading: boolean;
+  handleSessionExpiry: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function AuthProviderInner({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Only check auth status once on mount
+    checkAuthStatus().catch(error => {
+      console.error("Initial auth check failed:", error);
+    });
+    
+    // Register global session expiry handlers
+    setSessionExpiryHandler(handleSessionExpiry);
+    setQuerySessionExpiryHandler(handleSessionExpiry);
+  }, []); // Only run once on mount
+
+  const handleSessionExpiry = () => {
+    console.log("Session expired - redirecting to login");
+    setUser(null);
+    toast({
+      variant: "destructive",
+      title: "Session Expired",
+      description: "Your session has expired. Please login again.",
+    });
+    
+    // Redirect to login after a brief delay to show the toast
+    setTimeout(() => {
+      setLocation("/login");
+    }, 1500);
+  };
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch("http://localhost:5050/api/auth/me", {
+        credentials: "include",
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        
+        // Store user data locally for PWA persistence
+        localStorage.setItem('fleetpro_user', JSON.stringify({
+          ...data.user,
+          lastValidated: Date.now()
+        }));
+      } else if (response.status === 401) {
+        // Clear local storage on session expiry
+        localStorage.removeItem('fleetpro_user');
+        
+        // Only trigger session expiry if user was previously authenticated
+        // This prevents the immediate logout issue after login
+        if (user) {
+          console.log("Session expired for authenticated user");
+          handleSessionExpiry();
+        } else {
+          // No user session, just clear the user state silently
+          setUser(null);
+        }
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      
+      // For PWA: Try to restore user from localStorage during network errors
+      if (!user && !navigator.onLine) {
+        const storedUser = localStorage.getItem('fleetpro_user');
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            
+            // Only restore if stored less than a week ago
+            if (parsedUser.lastValidated && parsedUser.lastValidated > oneWeekAgo) {
+              setUser(parsedUser);
+              console.log("Restored user from localStorage for offline use");
+            } else {
+              localStorage.removeItem('fleetpro_user');
+            }
+          } catch (e) {
+            localStorage.removeItem('fleetpro_user');
+          }
+        }
+      }
+      
+      // Only show session expiry if user was previously authenticated
+      if (user && navigator.onLine) {
+        handleSessionExpiry();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (userId: string, password: string) => {
+    try {
+      const response = await fetch("http://localhost:5050/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, password }),
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        const error = new Error(errorData.message || "Login failed");
+        (error as any).status = response.status;
+        (error as any).code = errorData.code;
+        throw error;
+      }
+      
+      const data = await response.json();
+      
+      // Set user data immediately
+      setUser(data.user);
+      setLoading(false);
+      
+      // Store user data locally
+      localStorage.setItem('fleetpro_user', JSON.stringify({
+        ...data.user,
+        lastValidated: Date.now()
+      }));
+      
+      // Navigate to appropriate dashboard based on user type
+      // Root admin: has admin role but NO tenantId (tenantId is null/undefined)
+      // Tenant admin: has admin role AND tenantId exists (tenantId is object with _id)
+      const hasTenanId = data.user.tenantId && typeof data.user.tenantId === 'object';
+      const isRootAdmin = data.user.role === "admin" && !hasTenanId;
+
+      console.log('Auth Decision:', { userId: data.user.userId, role: data.user.role, hasTenanId, isRootAdmin });
+
+      if (isRootAdmin) {
+        console.log('Redirecting to ADMIN dashboard');
+        setLocation("/admin");
+      } else {
+        console.log('Redirecting to TENANT dashboard');
+        setLocation("/dashboard");
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await apiRequest("POST", "/api/auth/logout");
+      setUser(null);
+      
+      // Clear PWA localStorage data
+      localStorage.removeItem('fleetpro_user');
+      
+      setLocation("/");
+      // Force page refresh to clear all cached state
+      window.location.reload();
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even if logout API fails, clear local state and redirect
+      setUser(null);
+      
+      // Clear PWA localStorage data
+      localStorage.removeItem('fleetpro_user');
+      
+      setLocation("/");
+      // Force page refresh to clear all cached state
+      window.location.reload();
+    }
+  };
+
+  const resetPassword = async (newPassword: string, confirmPassword: string) => {
+    try {
+      await apiRequest("POST", "/api/auth/reset-password", {
+        newPassword,
+        confirmPassword
+      });
+      // Clear user state to force re-login
+      setUser(null);
+      // Add a small delay to ensure state is cleared, then redirect
+      setTimeout(() => {
+        setLocation("/login");
+        // Force a page refresh to clear any cached state
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, resetPassword, loading, handleSessionExpiry }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  return <AuthProviderInner>{children}</AuthProviderInner>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
