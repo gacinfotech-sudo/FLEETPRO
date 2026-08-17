@@ -14,19 +14,15 @@ export const authenticateUser = async (req: AuthRequest, res: Response, next: Ne
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    // Try sessionId-based lookup first
-    let user: any;
+    // Require proper session ID for user lookup
     const sessionId = (req.session as any)?.userId;
-
-    if (sessionId) {
-      user = await storage.getUserBySessionId(sessionId);
+    if (!sessionId) {
+      return res.status(401).json({ message: "Authentication required" });
     }
 
-    // Fallback: check if we stored user details directly in session (workaround for DB issues)
-    if (!user && (req.session as any)?.userDetails) {
-      user = (req.session as any).userDetails;
-    }
-
+    // Always lookup from database to ensure user data is current
+    // Never use cached session data as fallback (prevents using deactivated user accounts)
+    const user = await storage.getUserBySessionId(sessionId);
     if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }

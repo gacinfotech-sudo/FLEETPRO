@@ -4,6 +4,20 @@ import { apiRequest, setSessionExpiryHandler } from "../lib/api";
 import { setQuerySessionExpiryHandler } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Get API base URL - same logic as api.ts but exported separately for use here
+const getAPIBase = (): string => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    if (window.location.protocol === 'https:') {
+      return 'https://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+    }
+    return 'http://localhost:5050';
+  }
+  return 'http://localhost:5050';
+};
+
 interface User {
   id: number;
   userId: string;
@@ -66,7 +80,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch("http://localhost:5050/api/auth/me", {
+      const apiBase = getAPIBase();
+      const response = await fetch(`${apiBase}/api/auth/me`, {
         credentials: "include",
         headers: {
           'Cache-Control': 'no-cache',
@@ -78,50 +93,50 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         const data = await response.json();
         setUser(data.user);
 
-        // Store user data locally for PWA persistence
-        localStorage.setItem('fleetpro_user', JSON.stringify({
-          ...data.user,
+        // Store user data in sessionStorage only (cleared on browser close)
+        // This prevents XSS from stealing persistent credentials
+        sessionStorage.setItem('fleetpro_user_session', JSON.stringify({
+          userId: data.user.userId,
+          role: data.user.role,
+          tenantId: data.user.tenantId,
           lastValidated: Date.now()
         }));
       } else if (response.status === 401) {
-        // Clear local storage on session expiry
+        // Clear session storage on auth failure
+        sessionStorage.removeItem('fleetpro_user_session');
         localStorage.removeItem('fleetpro_user');
 
         // Only trigger session expiry if user was previously authenticated
-        // This prevents the immediate logout issue after login
         if (user) {
           console.log("Session expired for authenticated user");
           handleSessionExpiry();
         } else {
-          // No user session, just clear the user state silently
           setUser(null);
         }
       }
     } catch (error) {
       console.error("Auth check failed:", error);
 
-      // For PWA: Try to restore user from localStorage during network errors
+      // For PWA: Try to restore minimal user info from sessionStorage during network errors
       if (!user && !navigator.onLine) {
-        const storedUser = localStorage.getItem('fleetpro_user');
+        const storedUser = sessionStorage.getItem('fleetpro_user_session');
         if (storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
             const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
-            // Only restore if stored less than a week ago
             if (parsedUser.lastValidated && parsedUser.lastValidated > oneWeekAgo) {
-              setUser(parsedUser);
-              console.log("Restored user from localStorage for offline use");
+              setUser(parsedUser as User);
+              console.log("Restored user from sessionStorage for offline use");
             } else {
-              localStorage.removeItem('fleetpro_user');
+              sessionStorage.removeItem('fleetpro_user_session');
             }
           } catch (e) {
-            localStorage.removeItem('fleetpro_user');
+            sessionStorage.removeItem('fleetpro_user_session');
           }
         }
       }
 
-      // Only show session expiry if user was previously authenticated
       if (user && navigator.onLine) {
         handleSessionExpiry();
       }
@@ -132,8 +147,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   const login = async (userId: string, password: string) => {
     try {
-      console.log("Login attempt:", { userId, url: "http://localhost:5050/api/auth/login" });
-      const response = await fetch("http://localhost:5050/api/auth/login", {
+      const apiBase = getAPIBase();
+      const response = await fetch(`${apiBase}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -141,8 +156,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         body: JSON.stringify({ userId, password }),
         credentials: "include",
       });
-
-      console.log("Response received:", { status: response.status, contentType: response.headers.get('content-type'), contentLength: response.headers.get('content-length') });
 
       if (!response.ok) {
         const errorData = await response.json();

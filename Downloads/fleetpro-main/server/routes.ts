@@ -56,16 +56,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(databaseSecurityMiddleware);
   
   // Session configuration with enhanced security and PWA support
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    throw new Error('SESSION_SECRET environment variable is required but not set');
+  }
+
   app.use(session({
-    secret: process.env.SESSION_SECRET || "your-secret-key",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production', // HTTPS only in production
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for PWA persistence
-      sameSite: 'lax', // Changed from 'strict' to 'lax' for better PWA compatibility
-      domain: 'localhost' // Allow cookie to be sent across different ports (5173, 5050)
+      sameSite: 'lax',
+      domain: process.env.COOKIE_DOMAIN || (process.env.NODE_ENV === 'production' ? '.fleetpro.com' : undefined)
     }
   }));
 
@@ -1325,6 +1330,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(vehicle);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Validation error",
+          errors: error.errors
+        });
+      }
+      console.error("Vehicle update error:", error);
       res.status(500).json({ message: "Failed to update vehicle" });
     }
   });
@@ -1403,6 +1415,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(driver);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Validation error",
+          errors: error.errors
+        });
+      }
+      console.error("Driver update error:", error);
       res.status(500).json({ message: "Failed to update driver" });
     }
   });
@@ -1565,6 +1584,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(booking);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Validation error",
+          errors: error.errors
+        });
+      }
+      console.error("Booking update error:", error);
       res.status(500).json({ message: "Failed to update booking" });
     }
   });
