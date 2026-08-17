@@ -116,7 +116,7 @@ export default function InvoiceGenerator({ booking, isOpen, onClose }: InvoiceGe
   const { data: businessProfile } = useQuery({
     queryKey: ['/api/auth/business-profile-for-documents'],
     queryFn: async () => {
-      const response = await fetch('/api/auth/business-profile-for-documents', {
+      const response = await fetch('http://localhost:5050/api/auth/business-profile-for-documents', {
         credentials: 'include'
       });
       if (!response.ok) {

@@ -78,7 +78,7 @@ export default function UserManagement() {
       };
       console.log("Request body:", requestBody);
       
-      const response = await fetch("/api/users/sub-users", {
+      const response = await fetch('http://localhost:5050/api/users/sub-users', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),

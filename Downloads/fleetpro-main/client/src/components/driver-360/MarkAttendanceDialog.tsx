@@ -41,7 +41,7 @@ export function MarkAttendanceDialog({
         notes
       };
 
-      const response = await fetch('/api/driver-attendance/mark', {
+      const response = await fetch('http://localhost:5050/api/driver-attendance/mark', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

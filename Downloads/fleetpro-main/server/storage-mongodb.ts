@@ -119,15 +119,18 @@ export class MongoDBStorage implements IStorage {
     try {
       // Escape special regex characters and make case-insensitive
       const escapedUserId = userId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const user = await User.findOne({ 
-        userId: new RegExp('^' + escapedUserId + '$', 'i') 
+      console.log('DEBUG getUserByCredentials - searching for userId:', userId);
+      const user = await User.findOne({
+        userId: new RegExp('^' + escapedUserId + '$', 'i')
       }).populate('tenantId');
 
+      console.log('DEBUG getUserByCredentials - user found:', user ? user.userId : 'NULL', 'id:', user?._id);
       if (!user) return undefined;
 
       // Password remains case-sensitive
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) return undefined;
+      console.log('DEBUG getUserByCredentials - password valid, returning user');
       return user;
     } catch (error) {
       console.error('Error getting user by credentials:', error);
@@ -137,16 +140,23 @@ export class MongoDBStorage implements IStorage {
 
   async updateUserSession(id: string, sessionId: string | null, deviceInfo?: any): Promise<void> {
     try {
-      const updateData: any = { 
+      const updateData: any = {
         sessionId,
-        lastLogin: sessionId ? new Date() : undefined 
+        lastLogin: sessionId ? new Date() : undefined
       };
-      
+
       if (deviceInfo) {
         updateData.deviceInfo = deviceInfo;
       }
-      
-      await User.findByIdAndUpdate(id, updateData);
+
+      console.log('DEBUG updateUserSession - id:', id, 'sessionId:', sessionId);
+
+      // First check if user exists
+      const existingUser = await User.findById(id);
+      console.log('DEBUG User exists?', existingUser ? existingUser.userId : 'NO');
+
+      const result = await User.findByIdAndUpdate(id, updateData, { new: true });
+      console.log('DEBUG updateUserSession result:', result?.userId, 'sessionId in DB:', result?.sessionId);
     } catch (error) {
       console.error('Error updating user session:', error);
       throw error;
@@ -171,8 +181,10 @@ export class MongoDBStorage implements IStorage {
 
   async getUserBySessionId(sessionId: string): Promise<IUser | undefined> {
     try {
+      console.log('DEBUG getUserBySessionId - searching for sessionId:', sessionId);
       const user = await User.findOne({ sessionId }).populate('tenantId') || undefined;
 
+      console.log('DEBUG getUserBySessionId - user found:', user ? user.userId : 'NULL');
       if (user) {
         console.log('User loaded by sessionId:', {
           userId: user.userId,

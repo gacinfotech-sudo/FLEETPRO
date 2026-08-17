@@ -79,7 +79,7 @@ export default function ManageExpenses() {
   // Create expense mutation
   const createExpenseMutation = useMutation({
     mutationFn: async (expenseData: any) => {
-      const response = await fetch('/api/expenses', {
+      const response = await fetch('http://localhost:5050/api/expenses', {
         method: 'POST',
         body: JSON.stringify(expenseData),
         headers: { 'Content-Type': 'application/json' }

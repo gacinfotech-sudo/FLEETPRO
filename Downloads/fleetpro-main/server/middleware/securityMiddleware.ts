@@ -6,8 +6,12 @@ import { logger } from '../utils/logger.js';
 const corsWhitelist = {
   development: [
     'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
     'http://localhost:5050',
     'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:5175',
     'http://127.0.0.1:5050'
   ],
   production: [
@@ -31,6 +35,22 @@ export const corsValidator = (req: Request, res: Response, next: NextFunction) =
     return next();
   }
 
+  // DEVELOPMENT: Allow all localhost variants
+  const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+  if (isLocalhost) {
+    // Allow all localhost variants without restriction
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Tenant-ID');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+    return next();
+  }
+
+  // PRODUCTION: Check whitelist
   if (!allowedOrigins.includes(origin)) {
     logger.logSecurity(
       `CORS origin rejected: ${origin}`,
@@ -124,7 +144,7 @@ export const securityHeadersMiddleware = helmet({
 export const injectionDetection = (req: Request, res: Response, next: NextFunction) => {
   const suspiciousPatterns = [
     /(\bunion\b|\bselect\b|\binsert\b|\bupdate\b|\bdelete\b)/gi, // SQL
-    /(\$where|\bdb\./gi, // NoSQL
+    /(\$where|db\.)/gi, // NoSQL
     /(<script|javascript:|onerror=|onload=)/gi // XSS
   ];
 

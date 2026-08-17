@@ -109,7 +109,7 @@ export default function CustomDashboard() {
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       const template = DASHBOARD_TEMPLATES.find(t => t.name === formData.template);
-      const response = await fetch("/api/dashboards", {
+      const response = await fetch('http://localhost:5050/api/dashboards", {
         method: "POST",
         body: JSON.stringify({
           ...data,

@@ -1230,8 +1230,72 @@ FieldVisitSchema.index({ createdAt: -1 });
 SLAMetricsSchema.index({ tenantId: 1, metricsDate: -1 });
 SLAMetricsSchema.index({ tenantId: 1, createdAt: -1 });
 
+// Missing interfaces for onboarding
+export interface IUserOnboarding extends Document {
+  userId: string;
+  tenantId: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  completedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IOnboardingTask extends Document {
+  onboardingId: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'completed';
+  completedAt?: Date;
+}
+
+export interface IOnboardingEmail extends Document {
+  userId: string;
+  type: string;
+  sentAt: Date;
+}
+
+export interface IDemoTenant extends Document {
+  name: string;
+  status: string;
+  createdAt: Date;
+}
+
+// Stub schemas for missing models
+const UserOnboardingSchema = new mongoose.Schema<IUserOnboarding>({
+  userId: String,
+  tenantId: String,
+  status: { type: String, enum: ['pending', 'in-progress', 'completed'], default: 'pending' },
+  completedAt: Date,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const OnboardingTaskSchema = new mongoose.Schema<IOnboardingTask>({
+  onboardingId: String,
+  title: String,
+  description: String,
+  status: { type: String, enum: ['pending', 'completed'], default: 'pending' },
+  completedAt: Date
+});
+
+const OnboardingEmailSchema = new mongoose.Schema<IOnboardingEmail>({
+  userId: String,
+  type: String,
+  sentAt: { type: Date, default: Date.now }
+});
+
+const DemoTenantSchema = new mongoose.Schema<IDemoTenant>({
+  name: String,
+  status: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
 // Export models
 export const Tenant = mongoose.model<ITenant>('Tenant', TenantSchema);
+export const UserOnboarding = mongoose.model<IUserOnboarding>('UserOnboarding', UserOnboardingSchema);
+export const OnboardingTask = mongoose.model<IOnboardingTask>('OnboardingTask', OnboardingTaskSchema);
+export const OnboardingEmail = mongoose.model<IOnboardingEmail>('OnboardingEmail', OnboardingEmailSchema);
+export const DemoTenant = mongoose.model<IDemoTenant>('DemoTenant', DemoTenantSchema);
 export const User = mongoose.model<IUser>('User', UserSchema);
 export const Vehicle = mongoose.model<IVehicle>('Vehicle', VehicleSchema);
 export const Driver = mongoose.model<IDriver>('Driver', DriverSchema);
@@ -1254,5 +1318,10 @@ export const Plan = mongoose.model<IPlan>('Plan', PlanSchema);
 export const Subscription = mongoose.model<ISubscription>('Subscription', SubscriptionSchema);
 export const SaaSInvoice = mongoose.model<ISaaSInvoice>('SaaSInvoice', SaaSInvoiceSchema);
 export const SaaSPayment = mongoose.model<ISaaSPayment>('SaaSPayment', SaaSPaymentSchema);
+
+// Advanced Admin Models
+export { AuditLogModel } from './audit-log';
+export { SystemSettingsModel } from './system-settings';
+export { PerformanceMetricsModel } from './performance-metrics';
 export const UsageLog = mongoose.model<IUsageLog>('UsageLog', UsageLogSchema);
 export const EntitlementLog = mongoose.model<IEntitlementLog>('EntitlementLog', EntitlementLogSchema);

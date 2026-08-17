@@ -60,7 +60,7 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   const { data: profileData, isLoading } = useQuery({
     queryKey: ['/api/auth/business-profile'],
     queryFn: async () => {
-      const response = await fetch('/api/auth/business-profile', {
+      const response = await fetch('http://localhost:5050/api/auth/business-profile', {
         credentials: 'include'
       });
       if (!response.ok) {
@@ -95,7 +95,7 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   // Update business profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BusinessDetails) => {
-      const response = await fetch('/api/auth/business-profile', {
+      const response = await fetch('http://localhost:5050/api/auth/business-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -239,7 +239,7 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       formData.append('logo', logoFile);
 
       console.log('Sending upload request...');
-      const response = await fetch('/api/auth/upload-logo', {
+      const response = await fetch('http://localhost:5050/api/auth/upload-logo', {
         method: 'POST',
         credentials: 'include',
         body: formData
@@ -395,7 +395,7 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       formData.append('signature', signatureFile);
 
       console.log('Sending signature upload request...');
-      const response = await fetch('/api/auth/upload-signature', {
+      const response = await fetch('http://localhost:5050/api/auth/upload-signature', {
         method: 'POST',
         credentials: 'include',
         body: formData

@@ -66,18 +66,18 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch("/api/auth/me", {
+      const response = await fetch("http://localhost:5050/api/auth/me", {
         credentials: "include",
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
-        
+
         // Store user data locally for PWA persistence
         localStorage.setItem('fleetpro_user', JSON.stringify({
           ...data.user,
@@ -86,7 +86,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       } else if (response.status === 401) {
         // Clear local storage on session expiry
         localStorage.removeItem('fleetpro_user');
-        
+
         // Only trigger session expiry if user was previously authenticated
         // This prevents the immediate logout issue after login
         if (user) {
@@ -99,7 +99,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Auth check failed:", error);
-      
+
       // For PWA: Try to restore user from localStorage during network errors
       if (!user && !navigator.onLine) {
         const storedUser = localStorage.getItem('fleetpro_user');
@@ -107,7 +107,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           try {
             const parsedUser = JSON.parse(storedUser);
             const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-            
+
             // Only restore if stored less than a week ago
             if (parsedUser.lastValidated && parsedUser.lastValidated > oneWeekAgo) {
               setUser(parsedUser);
@@ -120,7 +120,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           }
         }
       }
-      
+
       // Only show session expiry if user was previously authenticated
       if (user && navigator.onLine) {
         handleSessionExpiry();
@@ -132,15 +132,18 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   const login = async (userId: string, password: string) => {
     try {
-      const response = await fetch("/api/auth/login", {
+      console.log("Login attempt:", { userId, url: "http://localhost:5050/api/auth/login" });
+      const response = await fetch("http://localhost:5050/api/auth/login", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId, password }),
         credentials: "include",
       });
-      
+
+      console.log("Response received:", { status: response.status, contentType: response.headers.get('content-type'), contentLength: response.headers.get('content-length') });
+
       if (!response.ok) {
         const errorData = await response.json();
         const error = new Error(errorData.message || "Login failed");
@@ -148,8 +151,10 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         (error as any).code = errorData.code;
         throw error;
       }
-      
-      const data = await response.json();
+
+      const text = await response.text();
+      console.log("Response text:", text);
+      const data = JSON.parse(text);
       
       // Set user data immediately
       setUser(data.user);

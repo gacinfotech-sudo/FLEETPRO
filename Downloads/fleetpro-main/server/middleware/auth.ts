@@ -14,20 +14,21 @@ export const authenticateUser = async (req: AuthRequest, res: Response, next: Ne
       return res.status(401).json({ message: "Authentication required" });
     }
 
+    // Try sessionId-based lookup first
+    let user: any;
     const sessionId = (req.session as any)?.userId;
-    
-    if (!sessionId) {
-      return res.status(401).json({ message: "Authentication required" });
+
+    if (sessionId) {
+      user = await storage.getUserBySessionId(sessionId);
     }
 
-    const user = await storage.getUserBySessionId(sessionId);
-    
+    // Fallback: check if we stored user details directly in session (workaround for DB issues)
+    if (!user && (req.session as any)?.userDetails) {
+      user = (req.session as any).userDetails;
+    }
+
     if (!user) {
-      // Clear invalid session
-      req.session.destroy((err) => {
-        if (err) console.error('Error destroying session:', err);
-      });
-      return res.status(401).json({ message: "Invalid session" });
+      return res.status(401).json({ message: "Authentication required" });
     }
 
     if (!user.isActive) {

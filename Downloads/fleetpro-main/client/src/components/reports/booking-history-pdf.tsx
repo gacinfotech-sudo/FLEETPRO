@@ -23,7 +23,7 @@ export default function BookingHistoryPDF({ bookings, vehicles, drivers = [] }: 
       // Fetch business profile for header information (includes inherited data for managers)
       let businessProfile = null;
       try {
-        const profileResponse = await fetch('/api/auth/business-profile-for-documents', {
+        const profileResponse = await fetch('http://localhost:5050/api/auth/business-profile-for-documents', {
           credentials: 'include'
         });
         if (profileResponse.ok) {

@@ -64,7 +64,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       secure: process.env.NODE_ENV === 'production', // HTTPS only in production
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for PWA persistence
-      sameSite: 'lax' // Changed from 'strict' to 'lax' for better PWA compatibility
+      sameSite: 'lax', // Changed from 'strict' to 'lax' for better PWA compatibility
+      domain: 'localhost' // Allow cookie to be sent across different ports (5173, 5050)
     }
   }));
 
@@ -214,9 +215,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to create session" });
       }
       
-      // Set session cookie
+      // Set session cookie with sessionId AND backup user details
       (req.session as any).userId = sessionId;
-      
+      (req.session as any).userDetails = {
+        id: user.id,
+        userId: user.userId,
+        role: user.role,
+        tenantId: user.tenantId,
+        isActive: user.isActive,
+        _fromSession: true // Mark that this came from session fallback
+      };
+
       // Save session to ensure it's properly stored before response
       req.session.save((err) => {
         if (err) {
@@ -290,12 +299,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", authenticateUser, async (req: AuthRequest, res) => {
     try {
-      // Get fresh user data from database to ensure hasCompletedOnboarding is current
-      const user = await storage.getUser(req.user.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      // Use user already authenticated by middleware (already set in req.user)
+      let user = req.user;
+
+      // Optionally try to refresh from database if ID exists
+      if (req.user.id && !req.user._fromSession) {
+        const dbUser = await storage.getUser(req.user.id);
+        if (dbUser) {
+          user = dbUser;
+        }
       }
-      
+
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       res.json({
         user: {
           id: user.id,
@@ -2119,6 +2137,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== PHASE 4: ADVANCED AUTH & SECURITY =====
   // Register Advanced Auth Routes
   app.use("/api", authAdvancedRoutes);
+
+  // ===== ADVANCED ADMIN DASHBOARD =====
+  const adminAdvancedRoutes = await import('./routes/admin-advanced');
+  app.use("/api/admin", adminAdvancedRoutes.default);
+
+  // Record metrics every 30 seconds
+  setInterval(async () => {
+    const { AnalyticsService } = await import('./services/analytics-service');
+    AnalyticsService.recordMetrics();
+  }, 30000);
 
   // Register Signup Routes (Public)
   app.use("/api/signup", signupRoutes);
