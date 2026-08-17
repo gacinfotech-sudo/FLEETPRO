@@ -78,7 +78,6 @@ const TenantCustomization: React.FC = () => {
     setLoading(true);
     try {
       // Mock API call - replace with actual API endpoint
-      console.log('Loading configuration for tenant:', id);
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to load configuration' });
     } finally {
@@ -122,7 +121,6 @@ const TenantCustomization: React.FC = () => {
     setSaving(true);
     try {
       // Mock API call - replace with actual endpoint
-      console.log('Saving branding settings:', settings);
       setMessage({ type: 'success', text: 'Branding updated successfully!' });
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to save branding settings' });
@@ -134,7 +132,6 @@ const TenantCustomization: React.FC = () => {
   const handleSaveWhiteLabel = async (settings: Record<string, any>) => {
     setSaving(true);
     try {
-      console.log('Saving white-label settings:', settings);
       setMessage({ type: 'success', text: 'White-label settings updated successfully!' });
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to save white-label settings' });
@@ -146,7 +143,6 @@ const TenantCustomization: React.FC = () => {
   const handleSaveApiConfig = async (settings: Record<string, any>) => {
     setSaving(true);
     try {
-      console.log('Saving API configuration:', settings);
       setMessage({ type: 'success', text: 'API configuration updated successfully!' });
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to save API configuration' });

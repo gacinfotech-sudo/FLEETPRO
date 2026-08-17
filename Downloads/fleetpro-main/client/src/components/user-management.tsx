@@ -63,7 +63,6 @@ export default function UserManagement() {
   // Create sub-user mutation
   const createSubUserMutation = useMutation({
     mutationFn: async (data: CreateSubUserForm) => {
-      console.log("Creating manager with data:", data);
       const requestBody = {
         userId: data.userId,
         password: data.password,
@@ -76,7 +75,6 @@ export default function UserManagement() {
           "generate_invoice"
         ]
       };
-      console.log("Request body:", requestBody);
       
       const response = await fetch('http://localhost:5050/api/users/sub-users', {
         method: "POST",
@@ -84,7 +82,6 @@ export default function UserManagement() {
         body: JSON.stringify(requestBody),
       });
 
-      console.log("Response status:", response.status);
       
       if (!response.ok) {
         const error = await response.json();
@@ -93,7 +90,6 @@ export default function UserManagement() {
       }
 
       const result = await response.json();
-      console.log("Success response:", result);
       return result;
     },
     onSuccess: () => {
@@ -188,7 +184,6 @@ export default function UserManagement() {
       return;
     }
     
-    console.log("Form submitted with data:", data);
     createSubUserMutation.mutate(data);
   };
 

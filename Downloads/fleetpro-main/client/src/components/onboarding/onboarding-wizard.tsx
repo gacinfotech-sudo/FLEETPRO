@@ -84,7 +84,6 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
   const handleComplete = async () => {
     setIsCompleting(true);
     try {
-      console.log('Attempting to complete onboarding...');
       await completeOnboardingMutation.mutateAsync();
     } catch (error) {
       console.error('Onboarding completion error:', error);
@@ -100,7 +99,6 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
   const handleSkip = async () => {
     setIsCompleting(true);
     try {
-      console.log('Skipping onboarding and marking as complete...');
       await completeOnboardingMutation.mutateAsync();
       onSkip();
     } catch (error) {

@@ -2065,7 +2065,6 @@ export default function Dashboard() {
   };
 
   const handleOnboardingComplete = () => {
-    console.log('Onboarding completed, hiding wizard');
     setShowOnboarding(false);
     // Refetch user data to update hasCompletedOnboarding status
     queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
@@ -2076,7 +2075,6 @@ export default function Dashboard() {
   };
 
   const handleOnboardingSkip = () => {
-    console.log('Onboarding skipped, hiding wizard');
     setShowOnboarding(false);
     // Refetch user data to update hasCompletedOnboarding status
     queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
@@ -2089,9 +2087,7 @@ export default function Dashboard() {
   // Check if user should see onboarding wizard (first-time login)
   useEffect(() => {
     if (user && user.role === 'client') {
-      console.log('User onboarding status:', user.hasCompletedOnboarding);
       if (user.hasCompletedOnboarding === false || user.hasCompletedOnboarding === undefined) {
-        console.log('First-time client user detected, showing onboarding wizard');
         setShowOnboarding(true);
       }
     }

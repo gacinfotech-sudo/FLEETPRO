@@ -33,8 +33,6 @@ export default function BookingHistoryPDF({ bookings, vehicles, drivers = [] }: 
         console.warn('Could not fetch business profile:', error);
       }
       
-      console.log('Business profile data:', businessProfile);
-      console.log('Logo URL:', businessProfile?.businessDetails?.logoUrl);
       
       const doc = new jsPDF('landscape'); // Change to landscape orientation for horizontal layout
       const currentDate = new Date().toLocaleDateString();
@@ -42,7 +40,6 @@ export default function BookingHistoryPDF({ bookings, vehicles, drivers = [] }: 
       // Helper function to load and add logo image
       const loadLogoImage = async (): Promise<string | null> => {
         if (!businessProfile?.businessDetails?.logoUrl) {
-          console.log('No logo URL found in business profile');
           return null;
         }
         
@@ -110,7 +107,6 @@ export default function BookingHistoryPDF({ bookings, vehicles, drivers = [] }: 
           // Add the actual logo image
           doc.addImage(logoImageData, 'JPEG', 15, 5, 25, 25);
         } catch (error) {
-          console.log('Logo loading error:', error);
           // Fallback to placeholder
           doc.setFillColor(248, 250, 252);
           doc.rect(15, 5, 25, 25, 'F');

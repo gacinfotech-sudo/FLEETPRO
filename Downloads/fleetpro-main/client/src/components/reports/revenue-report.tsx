@@ -73,7 +73,6 @@ export default function RevenueReport() {
   const dateRange = getDateRange();
   
   // Debug logging for date range
-  console.log('Revenue Report Debug:', {
     timePeriod,
     dateRange,
     queryEnabled: timePeriod === "all" || !!(dateRange.startDate && dateRange.endDate)

@@ -54,7 +54,6 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   const isManager = userRole === 'manager';
   
   // Debug logging
-  console.log('BusinessProfile - userRole:', userRole, 'hasAccess:', hasAccess, 'isManager:', isManager);
 
   // Fetch business profile data (enabled for managers too to get inherited profile)
   const { data: profileData, isLoading } = useQuery({
@@ -74,11 +73,9 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
 
   // Set initial values when data is loaded
   useEffect(() => {
-    console.log('BusinessProfile - profileData:', profileData);
     if (profileData?.businessDetails !== undefined) {
       // Handle case where businessDetails is an empty object or null
       const details = profileData.businessDetails || {};
-      console.log('BusinessProfile - details:', details);
       setBusinessDetails({
         businessName: details.businessName || "",
         ownerName: details.ownerName || "",
@@ -136,11 +133,9 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   const handleLogoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      console.log('No file selected');
       return;
     }
 
-    console.log('File selected:', {
       name: file.name,
       size: file.size,
       type: file.type
@@ -149,7 +144,6 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      console.log('Invalid file type:', file.type);
       toast({
         variant: "destructive",
         title: "Invalid File Type",
@@ -223,11 +217,9 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   // Upload logo to server
   const uploadLogo = async () => {
     if (!logoFile) {
-      console.log('No logo file selected');
       return;
     }
 
-    console.log('Starting logo upload...', {
       fileName: logoFile.name,
       fileSize: logoFile.size,
       fileType: logoFile.type
@@ -238,14 +230,12 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       const formData = new FormData();
       formData.append('logo', logoFile);
 
-      console.log('Sending upload request...');
       const response = await fetch('http://localhost:5050/api/auth/upload-logo', {
         method: 'POST',
         credentials: 'include',
         body: formData
       });
 
-      console.log('Upload response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -254,7 +244,6 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       }
 
       const result = await response.json();
-      console.log('Upload successful:', result);
       
       // Update business details with the logo URL
       setBusinessDetails(prev => ({
@@ -292,11 +281,9 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   const handleSignatureSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      console.log('No signature file selected');
       return;
     }
 
-    console.log('Signature file selected:', {
       name: file.name,
       size: file.size,
       type: file.type
@@ -305,7 +292,6 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      console.log('Invalid file type:', file.type);
       toast({
         variant: "destructive",
         title: "Invalid File Type",
@@ -379,11 +365,9 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   // Upload signature to server
   const uploadSignature = async () => {
     if (!signatureFile) {
-      console.log('No signature file selected');
       return;
     }
 
-    console.log('Starting signature upload...', {
       fileName: signatureFile.name,
       fileSize: signatureFile.size,
       fileType: signatureFile.type
@@ -394,14 +378,12 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       const formData = new FormData();
       formData.append('signature', signatureFile);
 
-      console.log('Sending signature upload request...');
       const response = await fetch('http://localhost:5050/api/auth/upload-signature', {
         method: 'POST',
         credentials: 'include',
         body: formData
       });
 
-      console.log('Signature upload response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -410,7 +392,6 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       }
 
       const result = await response.json();
-      console.log('Signature upload successful:', result);
       
       // Update business details with the signature URL
       setBusinessDetails(prev => ({

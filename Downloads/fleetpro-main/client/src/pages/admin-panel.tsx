@@ -22,7 +22,6 @@ export default function AdminPanel() {
   
   // Debug logging
   useEffect(() => {
-    console.log('Admin Panel mounted');
   }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
@@ -206,14 +205,12 @@ export default function AdminPanel() {
 
   const handleLogout = async () => {
     // Log admin logout for security audit
-    console.log('Admin logout initiated at:', new Date().toISOString());
     await logout();
   };
 
   // Add session activity tracking
   useEffect(() => {
     const logActivity = () => {
-      console.log('Admin panel activity at:', new Date().toISOString());
     };
     
     const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];

@@ -140,7 +140,6 @@ export default function DriverForm({ driver, onSuccess }: DriverFormProps) {
       processedData.dateOfJoining = data.dateOfJoining;
     }
 
-    console.log('Driver form data being submitted:', processedData);
 
     if (driver) {
       await updateDriverMutation.mutateAsync(processedData);

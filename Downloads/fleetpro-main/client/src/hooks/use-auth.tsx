@@ -64,7 +64,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   }, []); // Only run once on mount
 
   const handleSessionExpiry = () => {
-    console.log("Session expired - redirecting to login");
     setUser(null);
     toast({
       variant: "destructive",
@@ -108,7 +107,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
         // Only trigger session expiry if user was previously authenticated
         if (user) {
-          console.log("Session expired for authenticated user");
           handleSessionExpiry();
         } else {
           setUser(null);
@@ -127,7 +125,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
             if (parsedUser.lastValidated && parsedUser.lastValidated > oneWeekAgo) {
               setUser(parsedUser as User);
-              console.log("Restored user from sessionStorage for offline use");
             } else {
               sessionStorage.removeItem('fleetpro_user_session');
             }
@@ -166,7 +163,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       }
 
       const text = await response.text();
-      console.log("Response text:", text);
       const data = JSON.parse(text);
       
       // Set user data immediately
