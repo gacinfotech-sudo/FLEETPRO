@@ -93,7 +93,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timestamp = Date.now();
       const ext = path.extname(file.originalname);
       const filename = `logo_${userId}_${timestamp}${ext}`;
-      console.log('Generated filename:', filename);
       cb(null, filename);
     }
   });
@@ -129,7 +128,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timestamp = Date.now();
       const ext = path.extname(file.originalname);
       const filename = `signature_${userId}_${timestamp}${ext}`;
-      console.log('Generated signature filename:', filename);
       cb(null, filename);
     }
   });
@@ -154,7 +152,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth Routes with security enhancements
   app.post("/api/auth/login", checkUserLockout, protectLoginEndpoint, recordFailedLogin, async (req, res) => {
-    console.log('Login attempt for:', req.body.userId);
     try {
       const { userId, password } = req.body;
       const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
@@ -216,7 +213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateUserSession(user.id, sessionId, deviceInfo);
       } catch (error) {
         console.error('Error updating user session:', error);
-        return res.status(500).json({ message: "Failed to create session" });
+        console.error("Session creation error:", error);
+        return res.status(500).json({ message: "Internal server error" });
       }
       
       // Set session cookie with sessionId AND backup user details
@@ -234,7 +232,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.save((err) => {
         if (err) {
           console.error('Error saving session:', err);
-          return res.status(500).json({ message: "Failed to save session" });
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Internal server error" });
         }
 
         // Clear brute force protection on successful login
@@ -254,7 +253,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Login error:', error);
-      res.status(500).json({ message: "Login failed" });
+      console.error("Login error - complete failure:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -271,7 +271,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Find tenant with matching name to userId
           const tenant = tenants.find(t => t.name === user.userId);
           if (tenant) {
-            console.log(`Linking user ${user.userId} to tenant ${tenant._id}`);
             await storage.updateUser(user._id || user.id, { tenantId: tenant._id || tenant.id });
             fixedCount++;
           }
@@ -281,7 +280,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: `Fixed ${fixedCount} users`, fixedCount });
     } catch (error) {
       console.error('Error fixing tenant links:', error);
-      res.status(500).json({ message: "Failed to fix tenant links" });
+      console.error("Fix tenant links error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -290,12 +290,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserSession(req.user.id, null);
       req.session.destroy((err) => {
         if (err) {
-          return res.status(500).json({ message: "Logout failed" });
+          return console.error("Logout error:", error);
+      res.status(500).json({ message: "Internal server error" });
         }
         res.json({ message: "Logged out successfully" });
       });
     } catch (error) {
-      res.status(500).json({ message: "Logout failed" });
+      console.error("Logout error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -329,13 +331,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error in /api/auth/me:', error);
-      res.status(500).json({ message: "Failed to fetch user data" });
+      console.error("Fetch user data error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.post("/api/auth/complete-onboarding", authenticateUser, async (req: AuthRequest, res) => {
     try {
-      console.log('Complete onboarding request from user:', req.user.userId, 'role:', req.user.role);
       
       // Only allow client users to complete onboarding
       if (req.user.role !== 'client') {
@@ -343,11 +345,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.markOnboardingComplete(req.user.userId);
-      console.log('Onboarding completed successfully for user:', req.user.userId);
       res.json({ message: "Onboarding completed successfully" });
     } catch (error) {
       console.error("Error completing onboarding:", error);
-      res.status(500).json({ message: "Failed to complete onboarding" });
+      console.error("Complete onboarding error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -376,12 +378,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clear session to force re-login with new password
       req.session.destroy((err) => {
         if (err) {
-          return res.status(500).json({ message: "Password reset failed" });
+          return console.error("Password reset error:", error);
+      res.status(500).json({ message: "Internal server error" });
         }
         res.json({ message: "Password reset successfully. Please login with your new password." });
       });
     } catch (error) {
-      res.status(500).json({ message: "Password reset failed" });
+      console.error("Password reset error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -428,7 +432,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error fetching business profile:', error);
-      res.status(500).json({ message: "Failed to fetch business profile" });
+      console.error("Fetch business profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -470,7 +475,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error fetching business profile for documents:', error);
-      res.status(500).json({ message: "Failed to fetch business profile for documents" });
+      console.error("Fetch business profile for documents error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -478,16 +484,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow client users and admins to update business profile
       if (req.user.role === 'manager') {
-        return res.status(403).json({ 
-          message: "Access denied. Managers inherit business profile from their company owner. Contact your administrator to update business details." 
+        return res.status(403).json({
+          message: "Access denied. Managers inherit business profile from their company owner. Contact your administrator to update business details."
         });
       }
-      
+
       const { businessName, ownerName, businessAddress, gstNumber, businessEmail, businessPhone } = req.body;
-      
+
       // Validate required fields
       if (!businessName || !ownerName || !businessAddress || !businessEmail || !businessPhone) {
         return res.status(400).json({ message: "All fields except GST number are required" });
+      }
+
+      // Validate string lengths
+      if (businessName.length < 1 || businessName.length > 255) {
+        return res.status(400).json({ message: "Business name must be between 1 and 255 characters" });
+      }
+
+      if (ownerName.length < 1 || ownerName.length > 255) {
+        return res.status(400).json({ message: "Owner name must be between 1 and 255 characters" });
+      }
+
+      if (businessPhone.length < 7 || businessPhone.length > 20) {
+        return res.status(400).json({ message: "Business phone must be between 7 and 20 characters" });
       }
 
       // Validate email format
@@ -500,7 +519,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingUser = await storage.getUser(req.user.id);
       const existingBusinessDetails = existingUser?.businessDetails as any || {};
       
-      console.log('Preserving existing business details:', {
         logoUrl: existingBusinessDetails?.logoUrl,
         signatureUrl: existingBusinessDetails?.signatureUrl
       });
@@ -517,19 +535,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signatureUrl: existingBusinessDetails?.signatureUrl || ""
       };
 
-      console.log('Updated business details with preserved URLs:', businessDetails);
 
       await storage.updateUser(req.user.id, { businessDetails });
       res.json({ message: "Business profile updated successfully", businessDetails });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update business profile" });
+      console.error("Update business profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   // Logo upload endpoint
   app.post("/api/auth/upload-logo", authenticateUser, logoUpload.single('logo'), async (req: AuthRequest, res) => {
-    console.log('Logo upload attempt by user:', req.user.id);
-    console.log('File received:', req.file ? `${req.file.filename} (${req.file.size} bytes)` : 'No file');
     
     try {
       // Only allow client users and admins to upload logos
@@ -544,11 +560,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (!req.file) {
-        console.log('No file in request');
         return res.status(400).json({ message: "No logo file provided" });
       }
 
-      console.log('File details:', {
         filename: req.file.filename,
         size: req.file.size,
         mimetype: req.file.mimetype,
@@ -557,7 +571,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate file size again on server side
       if (req.file.size > 76800) {
-        console.log('File too large, removing:', req.file.path);
         // Remove the uploaded file if it's too large
         fs.unlinkSync(req.file.path);
         return res.status(400).json({ message: "File size must be 75KB or less" });
@@ -565,27 +578,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if file actually exists on disk
       if (!fs.existsSync(req.file.path)) {
-        console.log('File does not exist on disk:', req.file.path);
         return res.status(500).json({ message: "File upload failed - file not saved" });
       }
 
       // Convert logo to base64 for permanent storage
       const logoBuffer = fs.readFileSync(req.file.path);
       const logoBase64 = `data:${req.file.mimetype};base64,${logoBuffer.toString('base64')}`;
-      console.log('Generated logo base64 (first 50 chars):', logoBase64.substring(0, 50));
 
       // Clean up the temporary file
       fs.unlinkSync(req.file.path);
-      console.log('Removed temporary file:', req.file.path);
 
       // Update user's business details with logo base64
       const user = await storage.getUser(req.user.id);
       if (!user) {
-        console.log('User not found');
         return res.status(404).json({ message: "User not found" });
       }
 
-      console.log('Current user business details:', user.businessDetails);
 
       // Update business details with logo base64 - preserve existing details or use defaults
       const existingDetails = user.businessDetails || {} as any;
@@ -599,17 +607,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         logoUrl: logoBase64
       };
 
-      console.log('Updating business details with:', updatedBusinessDetails);
       
       const updatedUser = await storage.updateUser(req.user.id, { businessDetails: updatedBusinessDetails });
       
       if (!updatedUser) {
-        console.log('Failed to update user with logo data');
         return res.status(500).json({ message: "Failed to save logo data to database" });
       }
       
-      console.log('Logo upload successful for user:', req.user.id);
-      console.log('Updated user business details:', updatedUser.businessDetails);
 
       res.json({ 
         message: "Logo uploaded successfully", 
@@ -622,27 +626,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.file) {
         try {
           fs.unlinkSync(req.file.path);
-          console.log('Removed failed upload file:', req.file.path);
         } catch (unlinkError) {
           console.error('Failed to remove uploaded file:', unlinkError);
         }
       }
-      res.status(500).json({ message: "Failed to upload logo: " + (error as Error).message });
+      console.error("Logo upload error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   // Signature upload endpoint
   app.post("/api/auth/upload-signature", authenticateUser, signatureUpload.single('signature'), async (req: AuthRequest, res) => {
-    console.log('Signature upload attempt by user:', req.user.id);
-    console.log('File received:', req.file ? `${req.file.filename} (${req.file.size} bytes)` : 'No file');
     
     try {
       if (!req.file) {
-        console.log('No file in request');
         return res.status(400).json({ message: "No signature file provided" });
       }
 
-      console.log('File details:', {
         filename: req.file.filename,
         size: req.file.size,
         mimetype: req.file.mimetype,
@@ -651,34 +651,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate file size again on server side
       if (req.file.size > 20480) {
-        console.log('File too large, removing:', req.file.path);
         fs.unlinkSync(req.file.path);
         return res.status(400).json({ message: "File size must be 20KB or less" });
       }
 
       // Check if file actually exists on disk
       if (!fs.existsSync(req.file.path)) {
-        console.log('File does not exist on disk:', req.file.path);
         return res.status(500).json({ message: "File upload failed - file not saved" });
       }
 
       // Convert signature to base64 for permanent storage
       const signatureBuffer = fs.readFileSync(req.file.path);
       const signatureBase64 = `data:${req.file.mimetype};base64,${signatureBuffer.toString('base64')}`;
-      console.log('Generated signature base64 (first 50 chars):', signatureBase64.substring(0, 50));
 
       // Clean up the temporary file
       fs.unlinkSync(req.file.path);
-      console.log('Removed temporary file:', req.file.path);
 
       // Update user's business details with signature base64
       const user = await storage.getUser(req.user.id);
       if (!user) {
-        console.log('User not found');
         return res.status(404).json({ message: "User not found" });
       }
 
-      console.log('Current user business details:', user.businessDetails);
 
       // Update business details with signature base64 - preserve existing details
       const existingDetails = user.businessDetails || {} as any;
@@ -693,17 +687,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signatureUrl: signatureBase64
       };
 
-      console.log('Updating business details with:', updatedBusinessDetails);
       
       const updatedUser = await storage.updateUser(req.user.id, { businessDetails: updatedBusinessDetails });
       
       if (!updatedUser) {
-        console.log('Failed to update user with signature data');
         return res.status(500).json({ message: "Failed to save signature data to database" });
       }
       
-      console.log('Signature upload successful for user:', req.user.id);
-      console.log('Updated user business details:', updatedUser.businessDetails);
 
       res.json({ 
         message: "Signature uploaded successfully", 
@@ -716,12 +706,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.file && fs.existsSync(req.file.path)) {
         try {
           fs.unlinkSync(req.file.path);
-          console.log('Removed failed upload file:', req.file.path);
         } catch (unlinkError) {
           console.error('Failed to remove uploaded file:', unlinkError);
         }
       }
-      res.status(500).json({ message: "Failed to upload signature: " + (error as Error).message });
+      console.error("Signature upload error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -767,7 +757,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error getting security stats:", error);
-      res.status(500).json({ message: "Failed to get security statistics" });
+      console.error("Get security stats error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -777,13 +768,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenants = await storage.getTenants();
       res.json(tenants);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch tenants" });
+      console.error("Fetch tenants error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.post("/api/admin/tenants", authenticateUser, requireAdmin, async (req, res) => {
     try {
-      console.log('Creating tenant with data:', req.body);
       
       // Clean the data before validation
       const cleanedData = { ...req.body };
@@ -796,46 +787,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(tenant);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.log('Validation errors:', error.errors);
         return res.status(400).json({ message: "Invalid tenant data", errors: error.errors });
       }
       console.error('Tenant creation error:', error);
-      res.status(500).json({ message: "Failed to create tenant" });
+      console.error("Tenant creation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.put("/api/admin/tenants/:id", authenticateUser, requireAdmin, async (req, res) => {
     try {
       const id = req.params.id;
+
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid tenant ID format" });
+      }
+
       const tenantData = mongoTenantSchema.partial().parse(req.body);
       const tenant = await storage.updateTenant(id, tenantData);
-      
+
       if (!tenant) {
         return res.status(404).json({ message: "Tenant not found" });
       }
-      
+
       res.json(tenant);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update tenant" });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid tenant data", errors: error.errors });
+      }
+      console.error("Tenant update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.delete("/api/admin/tenants/:id", authenticateUser, requireAdmin, async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
       const id = req.params.id;
-      
-      // First, find and delete the associated user(s) for this tenant
+
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid tenant ID format" });
+      }
+
+      // First, find and delete the associated user(s) for this tenant within transaction
       const tenantUsers = await storage.getUsersByTenant(id);
       for (const user of tenantUsers) {
         await storage.deleteUser(user.id);
       }
-      
-      // Then delete the tenant
+
+      // Then delete the tenant within transaction
       await storage.deleteTenant(id);
-      
+
+      // Commit transaction
+      await session.commitTransaction();
       res.json({ message: "Client and associated user(s) deleted successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete client" });
+      // Rollback transaction on error
+      await session.abortTransaction();
+      console.error("Tenant deletion failed:", error);
+      res.status(500).json({ message: "Internal server error" });
+    } finally {
+      await session.endSession();
     }
   });
 
@@ -844,7 +860,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.getUsers();
       res.json(users);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch users" });
+      console.error("Fetch users error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -862,28 +879,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid user data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create user" });
+      console.error("User creation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.put("/api/admin/users/:id", authenticateUser, requireAdmin, async (req, res) => {
     try {
       const id = req.params.id;
+
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
       const userData = mongoUserSchema.partial().parse(req.body);
-      // Convert tenantId to ObjectId if it's a string  
+      // Convert tenantId to ObjectId if it's a string
       const userToUpdate: any = { ...userData };
       if (userData.tenantId) {
+        if (!mongoose.Types.ObjectId.isValid(userData.tenantId)) {
+          return res.status(400).json({ message: "Invalid tenant ID format" });
+        }
         userToUpdate.tenantId = new mongoose.Types.ObjectId(userData.tenantId);
       }
       const user = await storage.updateUser(id, userToUpdate);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       res.json(user);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update user" });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid user data", errors: error.errors });
+      }
+      console.error("User update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -893,7 +924,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteUser(id);
       res.json({ message: "User deleted successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete user" });
+      console.error("User deletion failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -913,7 +945,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.adminResetUserPassword(userId, tempPassword);
       res.json({ message: "User password reset successfully. User will be required to set a new password on next login." });
     } catch (error) {
-      res.status(500).json({ message: "Failed to reset password" });
+      console.error("Password reset failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -930,7 +963,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUser(userId, { isActive });
       res.json({ message: `User ${isActive ? 'activated' : 'deactivated'} successfully` });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update user activation status" });
+      console.error("User activation update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -943,7 +977,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const managers = await storage.getManagersByTenant(tenantId);
       res.json(managers);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch managers" });
+      console.error("Fetch managers error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -960,7 +995,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateTenant(tenantId, { maxManagers });
       res.json({ message: "Manager limit updated successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update manager limit" });
+      console.error("Manager limit update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -977,7 +1013,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.adminResetUserPassword(managerId, tempPassword);
       res.json({ message: "Manager password reset successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to reset manager password" });
+      console.error("Manager password reset failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -988,7 +1025,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deactivateClientAndManagers(tenantId);
       res.json({ message: "Client and all managers deactivated successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to deactivate client and managers" });
+      console.error("Client deactivation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -999,7 +1037,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.activateClientAndManagers(tenantId);
       res.json({ message: "Client and all managers activated successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to activate client and managers" });
+      console.error("Client activation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1010,7 +1049,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteUser(managerId);
       res.json({ message: "Manager deleted successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete manager" });
+      console.error("Manager deletion failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1032,7 +1072,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limits: limits || { vehicles: 6, drivers: 3, managers: 1 }
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch plan details" });
+      console.error("Fetch plan details error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1069,7 +1110,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error updating tenant plan:', error);
-      res.status(500).json({ message: "Failed to update plan" });
+      console.error("Plan update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1090,7 +1132,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         managers: managerUsage
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch usage data" });
+      console.error("Fetch usage data error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1100,7 +1143,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = await storage.getTenantStats(req.tenantId!);
       res.json(stats);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch stats" });
+      console.error("Fetch stats error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1161,7 +1205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(userResponse);
     } catch (error) {
       console.error("Error creating sub-user:", error);
-      res.status(500).json({ message: "Failed to create sub-user" });
+      console.error("Sub-user creation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1176,7 +1221,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(subUsers);
     } catch (error) {
       console.error("Error fetching sub-users:", error);
-      res.status(500).json({ message: "Failed to fetch sub-users" });
+      console.error("Fetch sub-users error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1195,7 +1241,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Sub-user deactivated successfully" });
     } catch (error) {
       console.error("Error deactivating sub-user:", error);
-      res.status(500).json({ message: "Failed to deactivate sub-user" });
+      console.error("Sub-user deactivation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1212,7 +1259,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Sub-user reactivated successfully" });
     } catch (error) {
       console.error("Error reactivating sub-user:", error);
-      res.status(500).json({ message: "Failed to reactivate sub-user" });
+      console.error("Sub-user reactivation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1220,7 +1268,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/revenue", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { startDate, endDate } = req.query;
-      console.log('Revenue Report API Debug:', {
         tenantId: req.tenantId,
         startDate,
         endDate,
@@ -1233,7 +1280,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate as string
       );
       
-      console.log('Revenue Report Results:', {
         totalRevenue: report.totalRevenue,
         totalBookings: report.completedBookings,
         dateRange: { startDate, endDate }
@@ -1242,7 +1288,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(report);
     } catch (error) {
       console.error("Error fetching revenue report:", error);
-      res.status(500).json({ message: "Failed to fetch revenue report" });
+      console.error("Revenue report fetch error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1252,7 +1299,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vehicles = await storage.getVehiclesByTenant(req.tenantId!);
       res.json(vehicles);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch vehicles" });
+      console.error("Fetch vehicles error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1293,14 +1341,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid vehicle data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create vehicle" });
+      console.error("Vehicle creation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.put("/api/vehicles/:id", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const id = req.params.id;
-      
+
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid vehicle ID format" });
+      }
+
       // Map frontend field names to MongoDB schema for updates
       const mappedData = {
         ...req.body,
@@ -1334,7 +1388,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       console.error("Vehicle update error:", error);
-      res.status(500).json({ message: "Failed to update vehicle" });
+      console.error("Vehicle update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1344,18 +1399,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteVehicle(id);
       res.json({ message: "Vehicle deleted successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete vehicle" });
+      console.error("Vehicle deletion failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.get("/api/vehicles/available", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { pickupDate, returnDate } = req.query;
-      
+
       if (!pickupDate || !returnDate) {
         return res.status(400).json({ message: "Pickup and return dates are required" });
       }
-      
+
+      // Validate date formats
+      const pickupTime = new Date(pickupDate as string).getTime();
+      const returnTime = new Date(returnDate as string).getTime();
+
+      if (isNaN(pickupTime) || isNaN(returnTime)) {
+        return res.status(400).json({ message: "Invalid date format. Please use ISO 8601 format." });
+      }
+
+      if (pickupTime >= returnTime) {
+        return res.status(400).json({ message: "Pickup date must be before return date" });
+      }
+
       const vehicles = await storage.getAvailableVehicles(
         req.tenantId!,
         pickupDate as string,
@@ -1363,7 +1431,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(vehicles);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch available vehicles" });
+      console.error("Fetch available vehicles error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1373,7 +1442,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const drivers = await storage.getDriversByTenant(req.tenantId!);
       res.json(drivers);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch drivers" });
+      console.error("Fetch drivers error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1396,13 +1466,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid driver data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create driver" });
+      console.error("Driver creation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.put("/api/drivers/:id", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const id = req.params.id;
+
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid driver ID format" });
+      }
+
       const driverData = mongoDriverSchema.partial().parse(req.body);
       const driver = await storage.updateDriver(id, driverData);
       
@@ -1419,7 +1496,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       console.error("Driver update error:", error);
-      res.status(500).json({ message: "Failed to update driver" });
+      console.error("Driver update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1429,18 +1507,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteDriver(id);
       res.json({ message: "Driver deleted successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete driver" });
+      console.error("Driver deletion failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.get("/api/drivers/available", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { pickupDate, returnDate } = req.query;
-      
+
       if (!pickupDate || !returnDate) {
         return res.status(400).json({ message: "Pickup and return dates are required" });
       }
-      
+
+      // Validate date formats
+      const pickupTime = new Date(pickupDate as string).getTime();
+      const returnTime = new Date(returnDate as string).getTime();
+
+      if (isNaN(pickupTime) || isNaN(returnTime)) {
+        return res.status(400).json({ message: "Invalid date format. Please use ISO 8601 format." });
+      }
+
+      if (pickupTime >= returnTime) {
+        return res.status(400).json({ message: "Pickup date must be before return date" });
+      }
+
       const drivers = await storage.getAvailableDrivers(
         req.tenantId!,
         pickupDate as string,
@@ -1448,7 +1539,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(drivers);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch available drivers" });
+      console.error("Fetch available drivers error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1461,7 +1553,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(bookings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch bookings" });
+      console.error("Fetch bookings error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1471,7 +1564,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.fixBookingAuditTrail();
       res.json({ message: `Fixed ${result} bookings` });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fix booking audit trail" });
+      console.error("Fix booking audit trail error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1480,7 +1574,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bookings = await storage.getUpcomingBookings(req.tenantId!);
       res.json(bookings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch upcoming bookings" });
+      console.error("Fetch upcoming bookings error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1513,13 +1608,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
-      console.log('Mapped booking data:', JSON.stringify(mappedData, null, 2));
       const bookingData = mongoBookingSchema.parse(mappedData);
       const booking = await storage.createBooking(bookingData);
       
       // Send real-time notification for new booking
       const server = (global as any).notificationServer;
-      console.log('Attempting to send booking_created notification for tenant:', req.tenantId);
       if (server && server.broadcastNotification) {
         const notification = {
           type: 'booking_created',
@@ -1533,10 +1626,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           timestamp: new Date().toISOString()
         };
-        console.log('Sending notification:', notification);
         server.broadcastNotification(req.tenantId!, notification);
       } else {
-        console.log('No server or broadcastNotification function available');
       }
       
       res.json(booking);
@@ -1546,13 +1637,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid booking data", errors: error.errors });
       }
       console.error('Booking creation error:', error);
-      res.status(500).json({ message: "Failed to create booking" });
+      console.error("Booking creation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.put("/api/bookings/:id", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const id = req.params.id;
+
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid booking ID format" });
+      }
+
       const bookingData = mongoBookingSchema.partial().parse(req.body);
       const booking = await storage.updateBooking(id, bookingData);
       
@@ -1588,7 +1686,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       console.error("Booking update error:", error);
-      res.status(500).json({ message: "Failed to update booking" });
+      console.error("Booking update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1631,7 +1730,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(booking);
     } catch (error) {
       console.error('Cancel booking error:', error);
-      res.status(500).json({ message: "Failed to cancel booking" });
+      console.error("Cancel booking failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1641,7 +1741,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteBooking(id);
       res.json({ message: "Booking deleted successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete booking" });
+      console.error("Booking deletion failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1652,7 +1753,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(expenses);
     } catch (error) {
       console.error('Get expenses error:', error);
-      res.status(500).json({ message: "Failed to fetch expenses" });
+      console.error("Fetch expenses error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1683,7 +1785,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(expense);
     } catch (error) {
       console.error('Create expense error:', error);
-      res.status(500).json({ message: "Failed to create expense" });
+      console.error("Expense creation failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1696,7 +1799,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(expense);
     } catch (error) {
       console.error('Get expense error:', error);
-      res.status(500).json({ message: "Failed to fetch expense" });
+      console.error("Fetch expense error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1717,7 +1821,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(expense);
     } catch (error) {
       console.error('Update expense error:', error);
-      res.status(500).json({ message: "Failed to update expense" });
+      console.error("Expense update failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1727,7 +1832,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Expense deleted successfully" });
     } catch (error) {
       console.error('Delete expense error:', error);
-      res.status(500).json({ message: "Failed to delete expense" });
+      console.error("Expense deletion failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1801,7 +1907,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Attendance marked successfully", attendance });
     } catch (error) {
       console.error("Mark attendance error:", error);
-      res.status(500).json({ message: "Failed to mark attendance" });
+      console.error("Mark attendance error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1838,7 +1945,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(summary);
     } catch (error) {
       console.error("Get attendance summary error:", error);
-      res.status(500).json({ message: "Failed to fetch attendance summary" });
+      console.error("Fetch attendance summary error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1868,7 +1976,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ calendar: calendarData, month: Number(month), year: Number(year) });
     } catch (error) {
       console.error("Get calendar view error:", error);
-      res.status(500).json({ message: "Failed to fetch calendar view" });
+      console.error("Fetch calendar view error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1913,7 +2022,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Attendance updated successfully", attendance: updatedAttendance });
     } catch (error) {
       console.error("Edit attendance error:", error);
-      res.status(500).json({ message: "Failed to edit attendance" });
+      console.error("Edit attendance error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -1966,7 +2076,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       console.error("Get attendance stats error:", error);
-      res.status(500).json({ message: "Failed to fetch attendance statistics" });
+      console.error("Fetch attendance stats error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
