@@ -4,8 +4,19 @@ import mongoose from 'mongoose';
 import { Tenant, User, Vehicle, Driver, Booking, Expense, Attendance, ITenant, IUser, IVehicle, IDriver, IBooking, IExpense, IAttendance } from './models';
 
 export interface IStorage {
-  // Auth methods
+  /**
+   * Authenticate user credentials and retrieve user data
+   * @param userId - The user ID to authenticate
+   * @param password - The plaintext password (will be compared with hashed value)
+   * @returns User object if credentials are valid, undefined otherwise
+   */
   getUserByCredentials(userId: string, password: string): Promise<IUser | undefined>;
+  /**
+   * Update user session information (login session, device, etc.)
+   * @param id - User ID
+   * @param sessionId - Session ID (null to clear session)
+   * @param deviceInfo - Optional device information for tracking
+   */
   updateUserSession(id: string, sessionId: string | null, deviceInfo?: any): Promise<void>;
   getUserBySessionId(sessionId: string): Promise<IUser | undefined>;
   getUserSession(id: string): Promise<{ sessionId: string; deviceInfo?: any } | undefined>;
@@ -13,14 +24,22 @@ export interface IStorage {
   adminResetUserPassword(userId: string, tempPassword: string): Promise<void>;
   updateUserLoginInfo(id: string, ip: string, userAgent: string): Promise<void>;
 
-  // Tenant methods
+  /**
+   * Create a new tenant (customer) in the system
+   * @param tenant - Partial tenant data (name, configuration, etc.)
+   * @returns Created tenant object with assigned ID
+   */
   createTenant(tenant: Partial<ITenant>): Promise<ITenant>;
   getTenants(): Promise<ITenant[]>;
   getTenant(id: string): Promise<ITenant | undefined>;
   updateTenant(id: string, data: Partial<ITenant>): Promise<ITenant | undefined>;
   deleteTenant(id: string): Promise<void>;
 
-  // User methods
+  /**
+   * Create a new user account
+   * @param user - User data including userId, password, email, tenantId, etc.
+   * @returns Created user object
+   */
   createUser(user: any): Promise<IUser>;
   getUsers(): Promise<IUser[]>;
   getUser(id: string): Promise<IUser | undefined>;
@@ -52,13 +71,22 @@ export interface IStorage {
   deleteDriver(id: string): Promise<void>;
   getAvailableDrivers(tenantId: string, pickupDate: string, returnDate: string): Promise<IDriver[]>;
 
-  // Booking methods
+  /**
+   * Create a new vehicle/driver booking
+   * @param booking - Booking data (vehicleId, driverId, pickupDate, returnDate, etc.)
+   * @returns Created booking object with status tracking
+   */
   createBooking(booking: any): Promise<IBooking>;
   getBookingsByTenant(tenantId: string): Promise<IBooking[]>;
   getBooking(id: string): Promise<IBooking | undefined>;
   updateBooking(id: string, data: any): Promise<IBooking | undefined>;
   deleteBooking(id: string): Promise<void>;
   getUpcomingBookings(tenantId: string): Promise<IBooking[]>;
+  /**
+   * Get aggregated business statistics for a tenant
+   * @param tenantId - The tenant ID to get stats for
+   * @returns Object containing revenue, booking count, fleet size, and active driver count
+   */
   getTenantStats(tenantId: string): Promise<{
     totalRevenue: number;
     totalBookings: number;
