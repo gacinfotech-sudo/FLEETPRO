@@ -59,7 +59,8 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   const { data: profileData, isLoading } = useQuery({
     queryKey: ['/api/auth/business-profile'],
     queryFn: async () => {
-      const response = await fetch('http://localhost:5050/api/auth/business-profile', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/auth/business-profile`, {
         credentials: 'include'
       });
       if (!response.ok) {
@@ -92,7 +93,8 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
   // Update business profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BusinessDetails) => {
-      const response = await fetch('http://localhost:5050/api/auth/business-profile', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/auth/business-profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -135,12 +137,6 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
     if (!file) {
       return;
     }
-
-    console.log({
-      name: file.name,
-      size: file.size,
-      type: file.type
-    });
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -281,11 +277,6 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       return;
     }
 
-      name: file.name,
-      size: file.size,
-      type: file.type
-    });
-
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
@@ -365,17 +356,13 @@ export default function BusinessProfile({ userRole, onShowOnboarding }: Business
       return;
     }
 
-      fileName: signatureFile.name,
-      fileSize: signatureFile.size,
-      fileType: signatureFile.type
-    });
-
     setIsUploadingSignature(true);
     try {
       const formData = new FormData();
       formData.append('signature', signatureFile);
 
-      const response = await fetch('http://localhost:5050/api/auth/upload-signature', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiBase}/api/auth/upload-signature`, {
         method: 'POST',
         credentials: 'include',
         body: formData
