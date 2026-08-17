@@ -5,6 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
+import { THIRTY_DAYS_MS } from "./constants/index.js";
 import { storage } from "./storage-mongodb";
 import { authenticateUser, requireAdmin, requireTenant, type AuthRequest } from "./middleware/auth";
 import { 
@@ -68,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     cookie: {
       secure: process.env.NODE_ENV === 'production', // HTTPS only in production
       httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for PWA persistence
+      maxAge: THIRTY_DAYS_MS, // 30 days for PWA persistence
       sameSite: 'lax',
       domain: process.env.COOKIE_DOMAIN || (process.env.NODE_ENV === 'production' ? '.fleetpro.com' : undefined)
     }

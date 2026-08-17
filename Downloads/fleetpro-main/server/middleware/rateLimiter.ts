@@ -2,6 +2,13 @@ import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
 import { Store } from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import { logger } from '../utils/logger.js';
+import {
+  ONE_MINUTE,
+  FIFTEEN_MINUTES_MS,
+  LOGIN_MAX_ATTEMPTS,
+  RATE_LIMIT_REQUESTS_PER_MINUTE,
+  LOGIN_ATTEMPT_LOCKOUT_DURATION
+} from '../constants/index.js';
 
 // Custom store for rate limiter using memory
 class MemoryStore implements Store {
@@ -59,13 +66,13 @@ class MemoryStore implements Store {
   }
 }
 
-const memoryStore = new MemoryStore(60000);
+const memoryStore = new MemoryStore(ONE_MINUTE);
 
 // Admin endpoints - strict rate limit (5 requests per minute per IP)
 export const adminLimiter: RateLimitRequestHandler = rateLimit({
   store: memoryStore,
-  windowMs: 60 * 1000, // 1 minute
-  max: 5,
+  windowMs: ONE_MINUTE,
+  max: LOGIN_MAX_ATTEMPTS,
   message: 'Too many admin requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -93,7 +100,7 @@ export const adminLimiter: RateLimitRequestHandler = rateLimit({
 // Auth endpoints - moderate rate limit (10 attempts per 15 minutes)
 export const authLimiter: RateLimitRequestHandler = rateLimit({
   store: memoryStore,
-  windowMs: 15 * 60 * 1000,
+  windowMs: FIFTEEN_MINUTES_MS,
   max: 10,
   message: 'Too many login attempts, please try again later.',
   standardHeaders: true,
@@ -119,8 +126,8 @@ export const authLimiter: RateLimitRequestHandler = rateLimit({
 // API endpoints - general rate limit (100 requests per minute)
 export const apiLimiter: RateLimitRequestHandler = rateLimit({
   store: memoryStore,
-  windowMs: 60 * 1000,
-  max: 100,
+  windowMs: ONE_MINUTE,
+  max: RATE_LIMIT_REQUESTS_PER_MINUTE,
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
@@ -134,16 +141,16 @@ export const apiLimiter: RateLimitRequestHandler = rateLimit({
 
 // Speed limiter - gradually slows down responses
 export const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000,
-  delayAfter: 100,
+  windowMs: FIFTEEN_MINUTES_MS,
+  delayAfter: RATE_LIMIT_REQUESTS_PER_MINUTE,
   delayMs: (hits) => hits * 100
 });
 
 // Brute force protection for specific endpoints
 export class BruteForceProtector {
   private attempts: Map<string, { count: number; timestamp: number }> = new Map();
-  private maxAttempts = 5;
-  private lockoutDuration = 15 * 60 * 1000; // 15 minutes
+  private maxAttempts = LOGIN_MAX_ATTEMPTS;
+  private lockoutDuration = LOGIN_ATTEMPT_LOCKOUT_DURATION;
 
   check(identifier: string): { allowed: boolean; remainingAttempts: number } {
     const now = Date.now();
