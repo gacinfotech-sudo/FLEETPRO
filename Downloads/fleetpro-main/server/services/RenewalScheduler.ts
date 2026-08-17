@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { Subscription, Plan } from '../models';
+import { Subscription, Plan, SaaSInvoice } from '../models';
 import { InvoicingService } from './InvoicingService';
 import { SubscriptionsService } from './SubscriptionsService';
 
@@ -84,7 +84,7 @@ export class RenewalScheduler {
    */
   private async checkOverduePayments(): Promise<void> {
     try {
-      const invoices = await require('../models').SaaSInvoice.find({
+      const invoices = await SaaSInvoice.find({
         dueDate: { $lt: new Date() },
         status: { $nin: ['PAID', 'CANCELLED'] }
       });

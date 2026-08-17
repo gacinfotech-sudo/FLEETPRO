@@ -2062,7 +2062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/driver-leaves/request", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { driverId, leaveType, startDate, endDate, reason, notes } = req.body;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (!tenantId || !driverId || !leaveType || !startDate || !endDate) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -2087,7 +2087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/driver-leaves/balance/:driverId", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { driverId } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (!tenantId || !driverId) {
         return res.status(400).json({ message: "Missing required parameters" });
@@ -2105,7 +2105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/driver-leaves/:leaveId/approve", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { leaveId } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (!tenantId || !leaveId) {
         return res.status(400).json({ message: "Missing required parameters" });
@@ -2142,7 +2142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { leaveId } = req.params;
       const { rejectionReason } = req.body;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (!tenantId || !leaveId) {
         return res.status(400).json({ message: "Missing required parameters" });
@@ -2177,7 +2177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { driverId } = req.params;
       const { limit = 50, offset = 0 } = req.query;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (!tenantId || !driverId) {
         return res.status(400).json({ message: "Missing required parameters" });
@@ -2200,7 +2200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get leave statistics (dashboard)
   app.get("/api/driver-leaves/stats", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (!tenantId) {
         return res.status(400).json({ message: "Missing tenant information" });
@@ -2283,7 +2283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/service-tickets", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { assetId, assetType, clientId, clientName, clientPhone, type, priority, description } = req.body;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       if (!assetId || !assetType || !clientId || !clientName || !clientPhone || !type || !priority || !description) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -2316,7 +2316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/service-tickets", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { status, priority, clientId, assetId, limit = 20, offset = 0 } = req.query;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const { tickets, total } = await ticketService.listTickets(tenantId, {
         status: status as string,
@@ -2338,7 +2338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/service-tickets/:id", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const ticket = await ticketService.getTicket(tenantId, id);
       if (!ticket) {
@@ -2357,7 +2357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status, diagnosis, resolution } = req.body;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       if (!status) {
         return res.status(400).json({ message: "Status is required" });
@@ -2381,7 +2381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { engineerId } = req.body;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const engineerObjectId = engineerId ? new mongoose.Types.ObjectId(engineerId) : undefined;
       const { ticket } = await assignmentService.assignTicketToEngineer(tenantId, id, engineerObjectId);
@@ -2398,7 +2398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { diagnosis, resolution } = req.body;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const ticket = await ticketService.updateTicketStatus(tenantId, id, {
         status: "RESOLVED",
@@ -2417,7 +2417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/service-tickets/:id/close", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const ticket = await ticketService.updateTicketStatus(tenantId, id, {
         status: "CLOSED"
@@ -2434,7 +2434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/fieldvisits", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { ticketId, assetId, visitDate, diagnosis, actionTaken, assetConditionBefore, assetConditionAfter, partsUsed, laborCost } = req.body;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
       const engineerId = new mongoose.Types.ObjectId(req.user?._id?.toString() || "");
 
       if (!ticketId || !assetId || !visitDate || !diagnosis || !actionTaken || !assetConditionBefore) {
@@ -2467,7 +2467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/fieldvisits/:id", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const fieldVisit = await fieldVisitService.getFieldVisit(tenantId, id);
       if (!fieldVisit) {
@@ -2486,7 +2486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { url, description } = req.body;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       if (!url || !description) {
         return res.status(400).json({ message: "URL and description required" });
@@ -2505,7 +2505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/fieldvisits/by-ticket/:ticketId", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { ticketId } = req.params;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const fieldVisits = await fieldVisitService.getFieldVisitsByTicket(
         tenantId,
@@ -2523,7 +2523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/engineers/:id/schedule", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
       const engineerId = new mongoose.Types.ObjectId(id);
 
       const tickets = await assignmentService.getEngineerSchedule(tenantId, engineerId);
@@ -2540,7 +2540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { includeResolved = false } = req.query;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
       const engineerId = new mongoose.Types.ObjectId(id);
 
       const tickets = await assignmentService.getAssignedTickets(
@@ -2561,7 +2561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { available } = req.body;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
       const engineerId = new mongoose.Types.ObjectId(id);
 
       const workload = await assignmentService.updateEngineerAvailability(tenantId, engineerId, available);
@@ -2577,7 +2577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sla/metrics", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { days = 7 } = req.query;
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const dashboard = await slaService.getSLADashboard(tenantId, Number(days));
 
@@ -2591,7 +2591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/sla/breaches - Breached SLAs
   app.get("/api/sla/breaches", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
-      const tenantId = new mongoose.Types.ObjectId(req.user?.tenantId?.toString() || "");
+      const tenantId = new mongoose.Types.ObjectId(req.tenantId || "");
 
       const breaches = await slaService.getBreachedSLAs(tenantId);
 
@@ -2609,7 +2609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { name } = req.body;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2627,7 +2627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenants/:id/api-keys", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2645,7 +2645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/tenants/:id/api-keys/:keyName", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id, keyName } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2663,7 +2663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tenants/:id/branding", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2681,7 +2681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenants/:id/branding", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2699,7 +2699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/tenants/:id/settings", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2717,7 +2717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenants/:id/settings", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2735,7 +2735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenants/:id/usage", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2754,7 +2754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { url, events } = req.body;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2772,7 +2772,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenants/:id/webhook", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2791,7 +2791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { plan } = req.body;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2809,7 +2809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenants/:id/billing", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2827,7 +2827,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenants/:id/features", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });
@@ -2857,7 +2857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tenants/:id/export-data", authenticateUser, requireTenant, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const tenantId = req.user?.tenantId?.toString();
+      const tenantId = req.tenantId;
 
       if (tenantId !== id) {
         return res.status(403).json({ message: "Unauthorized" });

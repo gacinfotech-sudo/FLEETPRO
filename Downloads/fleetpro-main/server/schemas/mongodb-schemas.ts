@@ -5,8 +5,8 @@ export const mongoTenantSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   businessName: z.string().min(1, 'Business name is required'),
   email: z.preprocess((val) => val === "" ? undefined : val, z.string().email().optional()),
-  phone: z.string().optional().transform(val => val === "" ? undefined : val),
-  address: z.string().optional().transform(val => val === "" ? undefined : val),
+  phone: z.string().transform(val => val === "" ? undefined : val).optional(),
+  address: z.string().transform(val => val === "" ? undefined : val).optional(),
   isActive: z.boolean().default(true),
   subscriptionPlan: z.enum(['starter', 'pro', 'custom']).default('starter'),
   limits: z.object({
@@ -22,8 +22,8 @@ export const mongoTenantSchemaV2 = z.object({
   name: z.string().min(1, 'Name is required').max(255),
   businessName: z.string().min(1, 'Business name is required').max(255),
   email: z.preprocess((val) => val === "" ? undefined : val, z.string().email().optional()),
-  phone: z.string().optional().transform(val => val === "" ? undefined : val),
-  address: z.string().optional().max(500),
+  phone: z.string().max(20).transform(val => val === "" ? undefined : val).optional(),
+  address: z.string().max(500).optional(),
   isActive: z.boolean().default(true),
   maxManagers: z.number().min(1).default(5).optional(),
 
