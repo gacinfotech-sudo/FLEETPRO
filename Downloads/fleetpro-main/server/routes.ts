@@ -214,7 +214,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Always update session in database
       try {
         await storage.updateUserSession(user.id, sessionId, deviceInfo);
-        console.log('Session updated successfully for user:', user.userId, 'sessionId:', sessionId);
       } catch (error) {
         console.error('Error updating user session:', error);
         return res.status(500).json({ message: "Failed to create session" });
@@ -237,8 +236,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error saving session:', err);
           return res.status(500).json({ message: "Failed to save session" });
         }
-        
-        console.log('Session saved successfully for user:', user.userId);
 
         // Clear brute force protection on successful login
         clearBruteForceOnSuccess(userId);
